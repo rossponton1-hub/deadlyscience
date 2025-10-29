@@ -560,20 +560,16 @@ Not Applicable (mixed ages, community event)
 <script>
 // v25: Deep link scroll targeting and conditional back link
 (function() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const fromParam = urlParams.get('from');
-  const cameFromCompleteness = document.referrer.includes('data_completeness.html') || fromParam === 'data-completeness';
-
-  if (cameFromCompleteness) {
+  // Check if arriving from Data Completeness page
+  if (document.referrer.includes('data_completeness.html')) {
     const backLink = document.getElementById('BackToCompletenessLink');
     if (backLink) {
       backLink.style.display = 'block';
     }
   }
-
-  window.__cameFromDataCompleteness = cameFromCompleteness;
-
+  
   // Handle ?edit= query parameter for scroll targeting
+  const urlParams = new URLSearchParams(window.location.search);
   const editKey = urlParams.get('edit'); // First value only
   
   if (editKey) {
@@ -1495,18 +1491,19 @@ function clearForm() {
 // v25: Deep-link scroll targeting
 window.addEventListener('DOMContentLoaded', function() {
   // Handle conditional back link
-  const urlParams = new URLSearchParams(window.location.search);
-  const fromParam = urlParams.get('from');
-  const cameFromCompleteness = window.__cameFromDataCompleteness || document.referrer.includes('data_completeness.html') || fromParam === 'data-completeness';
-
-  if (!cameFromCompleteness) {
+  const backLinkDiv = document.querySelector('#CurrentSessionCard').previousElementSibling;
+  if (document.referrer.includes('data_completeness.html')) {
+    // Back link already exists at line 195, just ensure it's visible (it is by default)
+  } else {
+    // Hide the back link if not from data_completeness
     const backLink = document.querySelector('a[href="data_completeness.html"]');
     if (backLink && backLink.parentElement) {
       backLink.parentElement.style.display = 'none';
     }
   }
-
+  
   // Handle edit parameter for scroll targeting
+  const urlParams = new URLSearchParams(window.location.search);
   const editKey = urlParams.get('edit');
   
   if (editKey) {

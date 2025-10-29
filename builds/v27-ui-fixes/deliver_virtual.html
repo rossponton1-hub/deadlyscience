@@ -428,20 +428,16 @@ Show the URL (forms.deadlyscience.org.au/survey/SESS-502) so students can type i
 <script>
 // v25: Deep link scroll targeting and conditional back link
 (function() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const fromParam = urlParams.get('from');
-  const cameFromCompleteness = document.referrer.includes('data_completeness.html') || fromParam === 'data-completeness';
-
-  if (cameFromCompleteness) {
+  // Check if arriving from Data Completeness page
+  if (document.referrer.includes('data_completeness.html')) {
     const backLink = document.getElementById('BackToCompletenessLink');
     if (backLink) {
       backLink.style.display = 'block';
     }
   }
-
-  window.__cameFromDataCompletenessVirtual = cameFromCompleteness;
-
+  
   // Handle ?edit= query parameter for scroll targeting
+  const urlParams = new URLSearchParams(window.location.search);
   const editKey = urlParams.get('edit'); // First value only
   
   if (editKey) {
@@ -997,18 +993,15 @@ updateCompleteButton();
 // v25: Deep-link scroll targeting and conditional back link
 window.addEventListener('DOMContentLoaded', function() {
   // Handle conditional back link visibility
-  const urlParams = new URLSearchParams(window.location.search);
-  const fromParam = urlParams.get('from');
-  const cameFromCompleteness = window.__cameFromDataCompletenessVirtual || document.referrer.includes('data_completeness.html') || fromParam === 'data-completeness';
-
-  if (cameFromCompleteness) {
+  if (document.referrer.includes('data_completeness.html')) {
     const backLinkDiv = document.getElementById('BackToCompletenessLink');
     if (backLinkDiv) {
       backLinkDiv.style.display = 'block';
     }
   }
-
+  
   // Handle edit parameter for scroll targeting
+  const urlParams = new URLSearchParams(window.location.search);
   const editKey = urlParams.get('edit');
   
   if (editKey) {

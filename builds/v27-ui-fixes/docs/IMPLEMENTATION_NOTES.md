@@ -15,11 +15,6 @@ The v27 build applies a combined logic and UI audit across all prototype HTML sc
 - **Survey_Response__c**: UI copy clarifies the separation between teacher feedback and student survey response types, and Presenter Tools buttons emphasise reminder triggers.
 - **Delivery Links**: Copy-link helpers degrade gracefully when `navigator.clipboard` is unavailable using textarea fallbacks.
 
-## Logic Flow Mapping
-- **Data Completeness → Delivery**: Every actionable row now exposes a mode-aware “Open Delivery” button. In-person rows deep link to `deliver_session.html` with the relevant `edit` anchor, while virtual rows open `deliver_virtual.html` so facilitators can manage QR display and teacher follow-up from the correct workspace.
-- **Back Navigation Guarantee**: Both delivery workspaces honour a `from=data-completeness` query string (in addition to referrer detection) to un-hide the back-to-dashboard link when launched from fixes, ensuring the workflow can be closed without manual history navigation.
-- **Resolution Flow Card**: The dashboard surfaces an explicit three-step flow (review alert → launch workspace → confirm closure) so operators know which actions sit with presenters versus teachers. Non-actionable historical clean-up items remain out of scope for the UI.
-
 ## QA Notes
 - Verified Presenter Tools banners hide/show messaging based on session ownership (`currentUser`).
 - Skip links now land focus on the main landmark thanks to tabindex management.
