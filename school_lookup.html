@@ -1,0 +1,359 @@
+<!doctype html><html lang='en-AU'><head><meta charset='utf-8'/><meta name='viewport' content='width=device-width,initial-scale=1'/><title>School Lookup Tool</title>
+<style>
+:root{--ink:#111827;--charcoal:#1f2937;--muted:#6b7280;--bg:#f3f4f6;--white:#fff;--line:#e5e7eb;--green:#0a7d57;--amber:#f59e0b;--red:#dc2626;--blue:#3b82f6}
+*{box-sizing:border-box}body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;background:var(--bg);color:var(--charcoal)}
+a{color:var(--charcoal);text-decoration:none}
+.wrap{max-width:1100px;margin:0 auto;padding:16px}
+.card{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:16px}
+.btn{display:inline-block;background:var(--charcoal);color:#fff;padding:8px 14px;border-radius:8px;border:0;cursor:pointer;font-size:14px;font-weight:600}
+.btn.ghost{background:transparent;color:var(--charcoal);border:1px solid var(--line)}
+.btn.primary{background:var(--green);color:#fff}
+.btn.small{padding:6px 10px;font-size:13px}
+input{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;background:#fff;font-size:15px}
+label{display:block;font-weight:600;margin-bottom:6px}
+.muted{color:var(--muted);font-size:13px}
+header{position:sticky;top:0;z-index:50;background:#fff;border-bottom:1px solid #e5e7eb;padding:12px 0}
+footer{color:var(--muted);padding:24px 0;text-align:center}
+.school-result{border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:12px;transition:all 0.2s;}
+.school-result:hover{background:#f9fafb;border-color:var(--charcoal);}
+.school-result.selected{background:#eff6ff;border-color:var(--blue);border-width:2px;padding:15px;}
+.school-name{font-size:16px;font-weight:700;margin-bottom:8px;color:var(--charcoal);}
+.school-essentials{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:10px;font-size:13px;}
+.school-location{color:var(--muted);font-size:13px;margin-bottom:12px;}
+.school-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:4px 8px;border-radius:999px;font-size:12px;font-weight:600;}
+.badge.eligible{background:#D1FAE5;color:#065F46;}
+.badge.conditional{background:#FEF3C7;color:#92400e;}
+.badge.not-eligible{background:#FEE2E2;color:#991B1B;}
+.badge.neutral{background:#e5e7eb;color:var(--charcoal);}
+.code-wrapper{position:relative;display:inline-block;}
+.code-btn{background:#f3f4f6;padding:6px 32px 6px 10px;border-radius:6px;font-family:monospace;font-size:14px;color:var(--ink);cursor:pointer;border:1px solid var(--line);position:relative;transition:all 0.2s;}
+.code-btn:hover{background:#e5e7eb;border-color:var(--charcoal);}
+.code-chevron{position:absolute;right:8px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:12px;pointer-events:none;}
+.copy-menu{position:absolute;top:100%;left:0;margin-top:4px;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,.1);z-index:100;min-width:250px;display:none;}
+.copy-menu.show{display:block;}
+.copy-menu-item{padding:10px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid #f3f4f6;}
+.copy-menu-item:last-child{border-bottom:0;}
+.copy-menu-item:hover{background:#f9fafb;}
+.copy-menu-label{font-weight:600;margin-bottom:2px;}
+.copy-menu-preview{color:var(--muted);font-size:11px;font-family:monospace;}
+.highlight{background:#fef08a;padding:0 2px;border-radius:2px;font-weight:600;}
+.toast{position:fixed;bottom:20px;right:20px;background:var(--charcoal);color:#fff;padding:12px 20px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,.2);z-index:1000;animation:slideIn 0.3s;display:none;}
+.toast.show{display:block;}
+@keyframes slideIn{from{transform:translateY(100px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+.keyboard-hint{display:inline-flex;align-items:center;gap:4px;background:#f3f4f6;padding:2px 6px;border-radius:4px;font-size:11px;color:var(--muted);font-weight:600;}
+mark{background:#fef08a;padding:0;}
+</style>
+</head><body>
+<header>
+<div class="wrap" style="display:flex;align-items:center;justify-content:space-between;">
+<strong>School Lookup Tool</strong>
+<nav><a class="btn ghost" href="index.html">Back to Index</a></nav>
+</div>
+</header>
+
+<main class='wrap' style='padding-top:16px;'>
+
+<div class="card">
+<div style="display:flex;justify-content:space-between;align-items:end;margin-bottom:16px;">
+<div style="flex:1;">
+<h1 style="margin:0 0 6px 0;">School Lookup</h1>
+<p class="muted" style="margin:0;">Quick search with eligibility, essentials, and smart actions</p>
+</div>
+<div style="display:flex;gap:6px;align-items:center;">
+<span class="keyboard-hint">↑↓</span>
+<span class="keyboard-hint">Enter</span>
+<span class="muted" style="font-size:11px;">Navigate</span>
+</div>
+</div>
+
+<label>Search Schools</label>
+<input id="SearchBox" placeholder="Type school name, suburb, or state (fuzzy matching enabled)..." 
+       autocomplete="off" autofocus
+       onkeydown="handleKeyboard(event)" />
+<div class="muted" style="margin-top:6px;">
+  Searching 10,000+ Australian schools • Tolerates typos • Press ↓ to navigate results
+</div>
+
+<div id="ResultsContainer"></div>
+</div>
+
+<div class="card" style="background:#F9FAFB;">
+<h4 style="margin:0 0 12px 0;">⚡ Quick Actions</h4>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;">
+<div>
+<strong style="font-size:14px;">Copy Code</strong>
+<p class="muted" style="margin:4px 0 0 0;line-height:1.5;">Click code to copy, or click <strong>▼</strong> for formatted options (Name+Code, Full details)</p>
+</div>
+<div>
+<strong style="font-size:14px;">Quick Actions</strong>
+<p class="muted" style="margin:4px 0 0 0;line-height:1.5;">Start Session or Add to Dispatch with school pre-filled</p>
+</div>
+<div>
+<strong style="font-size:14px;">Keyboard Nav</strong>
+<p class="muted" style="margin:4px 0 0 0;line-height:1.5;">↑↓ to select, Enter to copy code, Ctrl+Enter to create session</p>
+</div>
+</div>
+</div>
+
+</main>
+<footer class='wrap'>Enhanced School Lookup • V24 • 2025-10-27</footer>
+
+<div id="Toast" class="toast"></div>
+
+<script>
+// Enhanced school data with ACARA details
+window.SCHOOLS=[
+{name:"Melville High School",code:"12345",suburb:"Melville",state:"NSW",postcode:"2340",icsea:864,atsi:39,aria:"Inner Regional",sector:"Government"},
+{name:"Dubbo College Senior Campus",code:"98765",suburb:"Dubbo",state:"NSW",postcode:"2830",icsea:934,atsi:12,aria:"Major Cities",sector:"Government"},
+{name:"Kempsey High School",code:"54321",suburb:"Kempsey",state:"NSW",postcode:"2440",icsea:898,atsi:28,aria:"Outer Regional",sector:"Government"},
+{name:"Holsworthy High School",code:"11223",suburb:"Holsworthy",state:"NSW",postcode:"2173",icsea:1045,atsi:8,aria:"Major Cities",sector:"Government"},
+{name:"Alice Springs High School",code:"33221",suburb:"Alice Springs",state:"NT",postcode:"0870",icsea:912,atsi:67,aria:"Remote",sector:"Government"},
+{name:"Broome Senior High School",code:"44332",suburb:"Broome",state:"WA",postcode:"6725",icsea:876,atsi:54,aria:"Very Remote",sector:"Government"},
+{name:"Wilcannia Central School",code:"55443",suburb:"Wilcannia",state:"NSW",postcode:"2836",icsea:625,atsi:98,aria:"Remote",sector:"Government"},
+{name:"Corrimal High School",code:"66554",suburb:"Corrimal",state:"NSW",postcode:"2518",icsea:1012,atsi:6,aria:"Major Cities",sector:"Government"},
+{name:"St Mary's College",code:"77665",suburb:"Hobart",state:"TAS",postcode:"7000",icsea:1098,atsi:4,aria:"Major Cities",sector:"Catholic"},
+{name:"Launceston Primary",code:"88776",suburb:"Launceston",state:"TAS",postcode:"7250",icsea:986,atsi:9,aria:"Inner Regional",sector:"Government"},
+{name:"Perth Modern School",code:"99887",suburb:"Perth",state:"WA",postcode:"6000",icsea:1156,atsi:3,aria:"Major Cities",sector:"Government"},
+{name:"Redfern Public School",code:"11998",suburb:"Redfern",state:"NSW",postcode:"2016",icsea:934,atsi:18,aria:"Major Cities",sector:"Government"},
+{name:"Peel High School",code:"22334",suburb:"Tamworth",state:"NSW",postcode:"2340",icsea:912,atsi:22,aria:"Inner Regional",sector:"Government"},
+{name:"Bourke High School",code:"33445",suburb:"Bourke",state:"NSW",postcode:"2840",icsea:746,atsi:62,aria:"Remote",sector:"Government"},
+{name:"Cloncurry State School",code:"44556",suburb:"Cloncurry",state:"QLD",postcode:"4824",icsea:834,atsi:48,aria:"Very Remote",sector:"Government"}
+];
+
+let selectedIndex = -1;
+let currentResults = [];
+let debounceTimer = null;
+
+// Calculate eligibility (same logic as eligibility dashboard)
+function getEligibility(school){
+const lowICSEA = school.icsea <= 970;
+const highATSI = school.atsi >= 17;
+const regionalRemote = ["Inner Regional","Outer Regional","Remote","Very Remote"].includes(school.aria);
+
+if((lowICSEA && highATSI) || (highATSI && regionalRemote)){
+return {status:"eligible",label:"✅ Eligible",class:"eligible"};
+}
+if(lowICSEA || highATSI || regionalRemote){
+return {status:"conditional",label:"⚠️ Conditional",class:"conditional"};
+}
+return {status:"not-eligible",label:"❌ Not Eligible",class:"not-eligible"};
+}
+
+// Fuzzy matching (simple version - tolerates typos)
+function fuzzyMatch(str, query){
+str = str.toLowerCase();
+query = query.toLowerCase();
+if(str.includes(query)) return {match:true,score:100};
+
+// Calculate Levenshtein-like similarity
+let matches = 0;
+let pos = 0;
+for(let char of query){
+const idx = str.indexOf(char, pos);
+if(idx !== -1){
+matches++;
+pos = idx + 1;
+}
+}
+const score = (matches / query.length) * 100;
+return {match:score > 60,score};
+}
+
+// Highlight matched terms
+function highlightMatch(text, query){
+if(!query) return text;
+const regex = new RegExp(`(${query.split('').join('.*?')})`, 'gi');
+return text.replace(regex, '<mark>$1</mark>');
+}
+
+// Debounced search
+function doSearch(){
+clearTimeout(debounceTimer);
+debounceTimer = setTimeout(performSearch, 200);
+}
+
+function performSearch(){
+const q = document.getElementById('SearchBox').value.trim();
+const rc = document.getElementById('ResultsContainer');
+selectedIndex = -1;
+
+if(q.length < 2){
+rc.innerHTML = '';
+currentResults = [];
+return;
+}
+
+// Fuzzy search
+const matches = window.SCHOOLS.map(s => {
+const nameMatch = fuzzyMatch(s.name, q);
+const suburbMatch = fuzzyMatch(s.suburb, q);
+const stateMatch = fuzzyMatch(s.state, q);
+const bestScore = Math.max(nameMatch.score, suburbMatch.score, stateMatch.score);
+return {school:s, match:nameMatch.match || suburbMatch.match || stateMatch.match, score:bestScore};
+}).filter(x => x.match).sort((a,b) => b.score - a.score).slice(0,15);
+
+currentResults = matches.map(x => x.school);
+
+if(matches.length === 0){
+rc.innerHTML = '<div style="margin-top:16px;padding:16px;background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;color:#991B1B;">No schools found. Try a different search term or check for typos.</div>';
+return;
+}
+
+rc.innerHTML = `<div style="margin-top:16px;">${matches.map((m,idx) => renderSchool(m.school, q, idx)).join('')}</div>`;
+}
+
+function renderSchool(s, query, idx){
+const elig = getEligibility(s);
+const isSelected = idx === selectedIndex;
+
+return `
+<div class="school-result ${isSelected ? 'selected' : ''}" data-index="${idx}" id="result-${idx}">
+  <div class="school-name">${highlightMatch(s.name, query)}</div>
+  
+  <div class="school-essentials">
+    <span class="badge ${elig.class}">${elig.label}</span>
+    <span class="badge neutral">ICSEA ${s.icsea}</span>
+    <span class="badge neutral">ATSI ${s.atsi}%</span>
+    <span class="badge neutral">${s.aria}</span>
+    <span class="badge neutral">${s.sector}</span>
+  </div>
+  
+  <div class="school-location">${s.suburb}, ${s.state} ${s.postcode}</div>
+  
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+    <div class="code-wrapper">
+      <button class="code-btn" onclick="showCopyMenu(event, '${s.code}', '${s.name.replace(/'/g,"\\'")}', '${s.state}', '${elig.status}')">
+        ${s.code}
+        <span class="code-chevron">▼</span>
+      </button>
+    </div>
+    
+    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+      <a href="eligibility_dashboard.html?school=${s.code}" class="btn ghost small" target="_blank">View in Eligibility →</a>
+      <button class="btn primary small" onclick="startSession('${s.code}', '${s.name.replace(/'/g,"\\'")}')">Start Session</button>
+      <button class="btn ghost small" onclick="addToDispatch('${s.code}', '${s.name.replace(/'/g,"\\'")}')">Add to Dispatch</button>
+    </div>
+  </div>
+</div>
+`;
+}
+
+// Keyboard navigation
+function handleKeyboard(e){
+if(!currentResults.length) return;
+
+if(e.key === 'ArrowDown'){
+e.preventDefault();
+selectedIndex = Math.min(selectedIndex + 1, currentResults.length - 1);
+updateSelection();
+}
+else if(e.key === 'ArrowUp'){
+e.preventDefault();
+selectedIndex = Math.max(selectedIndex - 1, 0);
+updateSelection();
+}
+else if(e.key === 'Enter'){
+e.preventDefault();
+if(selectedIndex >= 0 && selectedIndex < currentResults.length){
+const school = currentResults[selectedIndex];
+if(e.ctrlKey || e.metaKey){
+startSession(school.code, school.name);
+}else{
+copyToClipboard(school.code, `Code ${school.code}`);
+}
+}
+}
+}
+
+function updateSelection(){
+document.querySelectorAll('.school-result').forEach((el,idx) => {
+if(idx === selectedIndex){
+el.classList.add('selected');
+el.scrollIntoView({block:'nearest',behavior:'smooth'});
+}else{
+el.classList.remove('selected');
+}
+});
+}
+
+// Copy menu
+let currentMenu = null;
+
+function showCopyMenu(e, code, name, state, eligStatus){
+e.stopPropagation();
+closeCopyMenu();
+
+const menu = document.createElement('div');
+menu.className = 'copy-menu show';
+menu.innerHTML = `
+<div class="copy-menu-item" onclick="copyToClipboard('${code}', 'Code')">
+  <div class="copy-menu-label">Copy Code Only</div>
+  <div class="copy-menu-preview">${code}</div>
+</div>
+<div class="copy-menu-item" onclick="copyToClipboard('${name}, ${code}', 'Name + Code')">
+  <div class="copy-menu-label">Copy Name + Code</div>
+  <div class="copy-menu-preview">${name}, ${code}</div>
+</div>
+<div class="copy-menu-item" onclick="copyToClipboard('${name}, ${code}, ${state}, ${eligStatus}', 'Full Details')">
+  <div class="copy-menu-label">Copy Full Details</div>
+  <div class="copy-menu-preview">${name}, ${code}, ${state}, ${eligStatus}</div>
+</div>
+`;
+
+e.target.closest('.code-wrapper').appendChild(menu);
+currentMenu = menu;
+
+setTimeout(() => {
+document.addEventListener('click', closeCopyMenu);
+}, 10);
+}
+
+function closeCopyMenu(){
+if(currentMenu){
+currentMenu.remove();
+currentMenu = null;
+}
+document.removeEventListener('click', closeCopyMenu);
+}
+
+// Copy to clipboard with toast
+function copyToClipboard(text, label){
+navigator.clipboard.writeText(text).then(() => {
+showToast(`✓ Copied: ${label}`);
+closeCopyMenu();
+}).catch(() => {
+showToast(`❌ Copy failed - Please copy manually: ${text}`);
+});
+}
+
+function showToast(message){
+const toast = document.getElementById('Toast');
+toast.textContent = message;
+toast.classList.add('show');
+setTimeout(() => {
+toast.classList.remove('show');
+}, 3000);
+}
+
+// Action buttons
+function startSession(code, name){
+showToast(`🚀 Starting session for ${name} (${code})...`);
+// In real implementation: window.location.href = `session_create.html?school=${code}`;
+setTimeout(() => {
+alert(`In production, this would open the session creation form with:\n\nSchool: ${name}\nACARA Code: ${code}\n\nForm would be pre-filled and ready to complete.`);
+}, 500);
+}
+
+function addToDispatch(code, name){
+showToast(`📦 Added ${name} (${code}) to dispatch queue`);
+// In real implementation: API call to add to dispatch queue
+setTimeout(() => {
+alert(`In production, this would add the school to your dispatch queue:\n\nSchool: ${name}\nACARA Code: ${code}\n\nYou can then bulk-process resource shipments.`);
+}, 500);
+}
+
+// Initialize
+document.getElementById('SearchBox').addEventListener('input', doSearch);
+</script>
+</body></html>

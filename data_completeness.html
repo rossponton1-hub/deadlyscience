@@ -1,0 +1,408 @@
+<!doctype html><html lang='en-AU'><head><meta charset='utf-8'/><meta name='viewport' content='width=device-width,initial-scale=1'/><title>Data Completeness</title>
+<style>
+:root{--ink:#111827;--charcoal:#1f2937;--muted:#6b7280;--bg:#f3f4f6;--white:#fff;--line:#e5e7eb;--green:#0a7d57;--red:#c62828;--amber:#f59e0b}
+*{box-sizing:border-box}body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;background:var(--bg);color:var(--charcoal)}
+a{color:var(--charcoal);text-decoration:none}
+.wrap{max-width:1200px;margin:0 auto;padding:12px}
+.card{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:16px}
+.btn{background:var(--charcoal);color:#fff;padding:10px 16px;border-radius:8px;border:0;cursor:pointer;font-size:14px;font-weight:600;transition:all 0.2s;display:inline-block}
+.btn:hover{opacity:0.9}
+.btn.primary{background:var(--green)}
+.btn.secondary{background:#3b82f6}
+.btn.danger{background:var(--red)}
+.btn.small{padding:6px 12px;font-size:12px}
+select,input{padding:8px;border:1px solid var(--line);border-radius:6px;font-size:14px}
+.muted{color:var(--muted);font-size:13px}
+header{position:sticky;top:0;z-index:50;background:#fff;border-bottom:1px solid #e5e7eb;padding:12px 0}
+table{width:100%;border-collapse:collapse;margin-top:12px}
+th{background:#f9fafb;padding:10px;text-align:left;font-size:13px;font-weight:600;border-bottom:2px solid #e5e7eb}
+td{padding:10px;border-bottom:1px solid #f3f4f6;font-size:13px}
+tr:hover{background:#f9fafb}
+.success{background:#D1FAE5;border:1px solid #A7F3D0;color:#065F46;padding:12px;border-radius:8px;margin:12px 0}
+.warning{background:#FEF3C7;border:1px solid #FDE68A;color:#92400e;padding:12px;border-radius:8px;margin:12px 0}
+.error{background:#FEE2E2;border:1px solid #FCA5A5;color:#991B1B;padding:12px;border-radius:8px;margin:12px 0}
+</style>
+</head><body>
+<header>
+<div class="wrap" style="display:flex;align-items:center;justify-content:space-between;">
+<strong>Data Completeness Dashboard</strong>
+<a class="btn small" style="background:#6b7280;" href="index.html">Index</a>
+</div>
+</header>
+
+<main class='wrap' style='padding-top:16px;'>
+
+<div class="warning" style="margin-bottom:20px;">
+<strong>ℹ️ About This Dashboard</strong><br>
+Data Completeness shows what's missing. To edit counts, funding, or facilitator, use Open Session. To resend surveys or mark non-responses, use the row actions.
+</div>
+
+<div class="card">
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+<div>
+<h3 style="margin:0;">📊 SessionSchool Data Completeness</h3>
+<div class="muted" style="margin-top:4px;">Tracking: Student Demographics • Teacher Feedback • Student Survey</div>
+</div>
+<div style="display:flex;align-items:center;gap:12px;">
+<label style="margin:0;">Date Range:</label>
+<select id="dateFilter" onchange="applyFilter()" style="min-width:150px;">
+<option value="30" selected>Last 30 Days</option>
+<option value="60">Last 60 Days</option>
+<option value="90">Last 90 Days</option>
+<option value="all">All Time</option>
+</select>
+</div>
+</div>
+
+<div class="success">
+<strong>💡 Data Completeness Requirements</strong><br>
+<ul style="margin:8px 0 0 20px;font-size:13px;">
+<li><strong>Student Demographics Complete =</strong> TotalStudents + YearLevels + ATSI_Count (Gender is optional)</li>
+<li><strong>Teacher Feedback =</strong> Post-session attendance/feedback survey (separate from demographics)</li>
+<li><strong>Student Survey = Incomplete if &lt;1 response</strong> (zero student responses collected during session)</li>
+</ul>
+</div>
+
+<div class="warning">
+<strong>🔔 Auto-Reminder Schedule</strong><br>
+All send actions trigger: 24hr / 48hr / 72hr (final, CC coordinator)
+</div>
+</div>
+
+<div class="card" style="border:2px solid #FCA5A5;">
+<h3 style="margin:0 0 12px 0;color:#991B1B;">🚨 Overdue Sessions (Past Scheduled Date, Not Complete)</h3>
+<div class="muted" style="margin-bottom:12px;">Sessions past their scheduled delivery date that are not marked complete</div>
+
+<table>
+<thead>
+<tr>
+<th>School</th>
+<th>Session ID</th>
+<th>Scheduled Date</th>
+<th>Days Overdue</th>
+<th>Presenter</th>
+<th>Status</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr data-session-id="SESS-634" data-mode="inperson">
+<td><strong>Dubbo College</strong></td>
+<td>SESS-634</td>
+<td>Oct 20, 2025</td>
+<td style="color:red;font-weight:bold;">7 days</td>
+<td>James Wilson</td>
+<td style="color:#f59e0b;">Not delivered</td>
+<td>
+<button class="btn danger small" onclick="followUpOverdue('SESS-634','James Wilson')">📧 Follow Up</button>
+<a class="btn small" href="deliver_session.html?session=SESS-634&edit=all" style="margin-left:4px;background:#3b82f6;color:#fff;">Open Session</a>
+</td>
+</tr>
+<tr data-session-id="SESS-599" data-mode="inperson">
+<td><strong>Parramatta PS</strong></td>
+<td>SESS-599</td>
+<td>Oct 18, 2025</td>
+<td style="color:red;font-weight:bold;">9 days</td>
+<td>Emma Rodriguez</td>
+<td style="color:#f59e0b;">Partially complete</td>
+<td>
+<button class="btn danger small" onclick="followUpOverdue('SESS-599','Emma Rodriguez')">📧 Follow Up</button>
+<a class="btn small" href="deliver_session.html?session=SESS-599&edit=all" style="margin-left:4px;background:#3b82f6;color:#fff;">Open Session</a>
+</td>
+</tr>
+</tbody>
+</table>
+
+<div class="error" style="margin-top:16px;">
+<strong>⚠️ Action Required</strong><br>
+Contact presenters to complete overdue sessions or cancel if no longer happening.
+</div>
+</div>
+
+<div class="card">
+<h3 style="margin:0 0 12px 0;">📊 Missing Student Demographics (15 SessionSchools)</h3>
+<div class="muted" style="margin-bottom:12px;">Missing: TotalStudents + YearLevels + ATSI_Count (required for reporting)</div>
+
+<table>
+<thead>
+<tr>
+<th>School</th>
+<th>Session</th>
+<th>Teacher Contact</th>
+<th>Email</th>
+<th>Days Since</th>
+<th>Missing Fields</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr data-session-id="SESS-502" data-mode="inperson">
+<td><strong>Redfern PS</strong></td>
+<td>SESS-502</td>
+<td>Ms. Emily Watson</td>
+<td>e.watson@redfern.nsw.edu.au</td>
+<td>5 days</td>
+<td style="color:red;">All demographics</td>
+<td>
+<button class="btn primary small" onclick="sendDemographicsForm('SESS-502','e.watson@redfern.nsw.edu.au','Ms. Emily Watson')">📧 Send Demographics Form</button>
+<a class="btn small" href="deliver_session.html?session=SESS-502&edit=counts" style="margin-left:4px;background:#3b82f6;color:#fff;">Open Session</a>
+</td>
+</tr>
+<tr data-session-id="SESS-445" data-mode="inperson">
+<td><strong>Kempsey PS</strong></td>
+<td>SESS-445</td>
+<td>Mr. Thomas Brown</td>
+<td>t.brown@kempsey.nsw.edu.au</td>
+<td>8 days</td>
+<td style="color:#f59e0b;">Missing ATSI Count only</td>
+<td>
+<button class="btn secondary small" onclick="sendReminder('SESS-445','t.brown@kempsey.nsw.edu.au','Mr. Thomas Brown','ATSI count')">🔔 Send Reminder</button>
+<a class="btn small" href="deliver_session.html?session=SESS-445&edit=counts" style="margin-left:4px;background:#3b82f6;color:#fff;">Open Session</a>
+</td>
+</tr>
+<tr data-session-id="SESS-712" data-mode="inperson">
+<td><strong>Blacktown PS</strong></td>
+<td>SESS-712</td>
+<td>Ms. Rachel Green</td>
+<td>r.green@blacktown.nsw.edu.au</td>
+<td>3 days</td>
+<td style="color:red;">TotalStudents + YearLevels</td>
+<td>
+<button class="btn primary small" onclick="sendDemographicsForm('SESS-712','r.green@blacktown.nsw.edu.au','Ms. Rachel Green')">📧 Send Demographics Form</button>
+<a class="btn small" href="deliver_session.html?session=SESS-712&edit=counts" style="margin-left:4px;background:#3b82f6;color:#fff;">Open Session</a>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<div class="card">
+<h3 style="margin:0 0 12px 0;">📝 Missing Teacher Feedback (10 SessionSchools)</h3>
+<div class="muted" style="margin-bottom:12px;">Post-session attendance/feedback survey not completed (separate from demographics)</div>
+
+<table>
+<thead>
+<tr>
+<th>School</th>
+<th>Session</th>
+<th>Teacher Contact</th>
+<th>Email</th>
+<th>Days Since</th>
+<th>Survey Status</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr data-session-id="SESS-623" data-mode="virtual">
+<td><strong>Liverpool High</strong></td>
+<td>SESS-623</td>
+<td>Ms. Sarah Mitchell</td>
+<td>s.mitchell@liverpool.nsw.edu.au</td>
+<td>4 days</td>
+<td style="color:#f59e0b;">Link sent, no response</td>
+<td><button class="btn secondary small" onclick="sendFeedbackSurvey('SESS-623','s.mitchell@liverpool.nsw.edu.au','Ms. Sarah Mitchell')">📧 Resend Feedback Survey</button></td>
+</tr>
+<tr data-session-id="SESS-587" data-mode="virtual">
+<td><strong>Campbelltown College</strong></td>
+<td>SESS-587</td>
+<td>Mr. David Lee</td>
+<td>d.lee@campbelltown.nsw.edu.au</td>
+<td>6 days</td>
+<td style="color:red;">Not sent</td>
+<td><button class="btn primary small" onclick="sendFeedbackSurvey('SESS-587','d.lee@campbelltown.nsw.edu.au','Mr. David Lee')">📧 Send Feedback Survey</button></td>
+</tr>
+<tr data-session-id="SESS-701" data-mode="virtual">
+<td><strong>Penrith PS</strong></td>
+<td>SESS-701</td>
+<td>Ms. Linda Chen</td>
+<td>l.chen@penrith.nsw.edu.au</td>
+<td>2 days</td>
+<td style="color:#f59e0b;">Link sent, no response</td>
+<td><button class="btn secondary small" onclick="sendFeedbackSurvey('SESS-701','l.chen@penrith.nsw.edu.au','Ms. Linda Chen')">📧 Resend Feedback Survey</button></td>
+</tr>
+</tbody>
+</table>
+
+<div class="warning" style="margin-top:12px;">
+<strong>📋 Note:</strong> Teacher Feedback = Post-session survey about attendance/experience (different from Demographics)
+</div>
+</div>
+
+<div class="card">
+<h3 style="margin:0 0 12px 0;">📱 Incomplete Student Survey (6 SessionSchools)</h3>
+<div class="muted" style="margin-bottom:12px;"><strong>Incomplete = &lt;1 response</strong> (zero student responses collected during session via QR code)</div>
+
+<table>
+<thead>
+<tr>
+<th>School</th>
+<th>Session</th>
+<th>Presenter</th>
+<th>Session Date</th>
+<th>Days Since</th>
+<th>Student Responses</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr data-session-id="SESS-712" data-mode="inperson">
+<td><strong>Auburn PS</strong></td>
+<td>SESS-712</td>
+<td>Michael Chen</td>
+<td>Oct 18, 2025</td>
+<td>9 days</td>
+<td style="color:red;font-weight:bold;">0 responses</td>
+<td><button class="btn danger small" onclick="contactPresenter('SESS-712','Michael Chen','Auburn PS')">📧 Contact Presenter</button></td>
+</tr>
+<tr data-session-id="SESS-689" data-mode="inperson">
+<td><strong>Bankstown College</strong></td>
+<td>SESS-689</td>
+<td>Sarah Thompson</td>
+<td>Oct 22, 2025</td>
+<td>5 days</td>
+<td style="color:red;font-weight:bold;">0 responses</td>
+<td><button class="btn danger small" onclick="contactPresenter('SESS-689','Sarah Thompson','Bankstown College')">📧 Contact Presenter</button></td>
+</tr>
+<tr data-session-id="SESS-645" data-mode="inperson">
+<td><strong>Fairfield High</strong></td>
+<td>SESS-645</td>
+<td>Emma Rodriguez</td>
+<td>Oct 23, 2025</td>
+<td>4 days</td>
+<td style="color:red;font-weight:bold;">0 responses</td>
+<td><button class="btn danger small" onclick="contactPresenter('SESS-645','Emma Rodriguez','Fairfield High')">📧 Contact Presenter</button></td>
+</tr>
+</tbody>
+</table>
+
+<div class="error" style="margin-top:12px;">
+<strong>⚠️ Presenter Action Required</strong><br>
+Presenter should have displayed QR code during session. Follow up to understand why no responses collected.
+</div>
+</div>
+
+<div class="card">
+<h3 style="margin:0 0 12px 0;">⏳ Awaiting Teacher Submissions (Virtual Sessions)</h3>
+<div class="muted" style="margin-bottom:12px;">Demographics links sent for virtual sessions, but teachers haven't submitted</div>
+
+<table>
+<thead>
+<tr>
+<th>School</th>
+<th>Session</th>
+<th>Teacher Contact</th>
+<th>Link Sent</th>
+<th>Days Waiting</th>
+<th>Last Reminder</th>
+<th>Presenter</th>
+<th>Actions</th>
+</tr>
+</thead>
+<tbody>
+<tr data-session-id="SESS-502" data-mode="virtual">
+<td><strong>Dubbo College</strong></td>
+<td>SESS-502</td>
+<td>Mr. John Chen<br><span class="muted">john.chen@dubbo.nsw.edu.au</span></td>
+<td>Oct 12</td>
+<td style="font-weight:bold;color:red;">15 days</td>
+<td style="color:#f59e0b;">13 days ago (72hr)</td>
+<td>Sarah Thompson</td>
+<td>
+<button class="btn secondary small" onclick="resendDemographicsLink('SESS-502','john.chen@dubbo.nsw.edu.au','Mr. John Chen')">📧 Resend Link</button>
+<button class="btn danger small" onclick="markWontSubmit('SESS-502','dubbo','Mr. John Chen')" style="margin-left:4px;">🚫 Mark Won't Submit</button>
+</td>
+</tr>
+<tr data-session-id="SESS-487" data-mode="virtual">
+<td><strong>Kempsey PS</strong></td>
+<td>SESS-487</td>
+<td>Mrs. Sarah Lee<br><span class="muted">sarah.lee@kempsey.nsw.edu.au</span></td>
+<td>Oct 5</td>
+<td style="font-weight:bold;color:red;">22 days</td>
+<td style="color:#f59e0b;">20 days ago (72hr)</td>
+<td>Michael Chen</td>
+<td>
+<button class="btn secondary small" onclick="resendDemographicsLink('SESS-487','sarah.lee@kempsey.nsw.edu.au','Mrs. Sarah Lee')">📧 Resend Link</button>
+<button class="btn danger small" onclick="markWontSubmit('SESS-487','kempsey','Mrs. Sarah Lee')" style="margin-left:4px;">🚫 Mark Won't Submit</button>
+</td>
+</tr>
+<tr data-session-id="SESS-634" data-mode="virtual">
+<td><strong>Orange HS</strong></td>
+<td>SESS-634</td>
+<td>Mr. Peter Wang<br><span class="muted">p.wang@orange.nsw.edu.au</span></td>
+<td>Oct 15</td>
+<td style="font-weight:bold;color:#f59e0b;">12 days</td>
+<td style="color:#3b82f6;">10 days ago (48hr)</td>
+<td>James Wilson</td>
+<td>
+<button class="btn secondary small" onclick="resendDemographicsLink('SESS-634','p.wang@orange.nsw.edu.au','Mr. Peter Wang')">📧 Resend Link</button>
+<button class="btn danger small" onclick="markWontSubmit('SESS-634','orange','Mr. Peter Wang')" style="margin-left:4px;">🚫 Mark Won't Submit</button>
+</td>
+</tr>
+</tbody>
+</table>
+
+<div class="warning" style="margin-top:16px;">
+<strong>💡 Resolution Path for Non-Responders</strong><br>
+After 14+ days with no response after 72hr reminder:
+<ul style="margin:8px 0 0 20px;font-size:13px;">
+<li>Use "Mark Won't Submit" to close out the SessionSchool without demographics</li>
+<li>This allows the presenter to complete their session and move on</li>
+<li>Demographics will be marked as permanently incomplete for this school</li>
+<li>Session can still be marked complete overall</li>
+</ul>
+</div>
+</div>
+
+</main>
+
+<script>
+function applyFilter() {
+  const days = document.getElementById('dateFilter').value;
+  const label = days === 'all' ? 'All Time' : `Last ${days} Days`;
+  alert(`Date filter applied: ${label}\n\nIn real system:\n• Re-query Salesforce with WHERE Scheduled_Date >= TODAY - ${days}\n• Refresh all sections with filtered data`);
+}
+
+function followUpOverdue(sessionId, presenter) {
+  if(confirm(`Send overdue reminder to ${presenter}?\n\nSession: ${sessionId}\n\n✉️ Email will CC coordinator`)) {
+    alert(`✅ Overdue reminder sent to ${presenter}\n\nIn real system:\n• Email via Zapier\n• Template: "Session ${sessionId} is overdue - please complete or cancel"\n• CC: coordinator@deadlyscience.org.au`);
+  }
+}
+
+function sendDemographicsForm(sessionId, email, teacher) {
+  if(confirm(`Send demographics form to ${teacher}?\n\nEmail: ${email}\nSession: ${sessionId}\n\n✉️ Auto-reminders enabled:\n• 24hr if not completed\n• 48hr if still incomplete\n• 72hr final (CC coordinator)`)) {
+    alert(`✅ Demographics form sent to ${teacher}\n\nIn real system:\n• Trigger Typeform link via Zapier\n• Email to: ${email}\n• Schedule auto-reminders\n• Update SessionSchool__c.Demographics_Link_Sent__c = TRUE`);
+  }
+}
+
+function sendReminder(sessionId, email, teacher, field) {
+  if(confirm(`Send reminder to ${teacher} about missing ${field}?\n\nEmail: ${email}\n\n✉️ Auto-reminders enabled:\n• 24hr / 48hr / 72hr (CC coordinator)`)) {
+    alert(`✅ Reminder sent to ${teacher}\n\nIn real system:\n• Email via Zapier\n• Template: "Please complete ${field} for session ${sessionId}"`);
+  }
+}
+
+function sendFeedbackSurvey(sessionId, email, teacher) {
+  if(confirm(`Send teacher feedback survey to ${teacher}?\n\nEmail: ${email}\nSession: ${sessionId}\n\n✉️ Auto-reminders enabled:\n• 24hr / 48hr / 72hr (CC coordinator)`)) {
+    alert(`✅ Feedback survey sent to ${teacher}\n\nIn real system:\n• Trigger Typeform link via Zapier\n• Email to: ${email}\n• Schedule auto-reminders\n• Update SessionSchool__c.Teacher_Feedback_Sent__c = TRUE`);
+  }
+}
+
+function contactPresenter(sessionId, presenter, school) {
+  if(confirm(`Contact ${presenter} about missing student surveys?\n\nSchool: ${school}\nSession: ${sessionId}\n\nPresenter should have displayed QR code during session.`)) {
+    alert(`✅ Email sent to ${presenter}\n\nIn real system:\n• Email via Zapier\n• Template: "No student responses for ${school} - please confirm QR was shown"`);
+  }
+}
+
+function resendDemographicsLink(sessionId, email, teacher) {
+  if(confirm(`Resend demographics link to ${teacher}?\n\nEmail: ${email}\n\n✉️ Auto-reminders will restart:\n• 24hr / 48hr / 72hr (CC coordinator)`)) {
+    alert(`✅ Demographics link resent to ${teacher}\n\nIn real system:\n• Re-send Typeform link via Zapier\n• Reset reminder schedule\n• Update SessionSchool__c.Last_Reminder_Sent__c = NOW()`);
+  }
+}
+
+function markWontSubmit(sessionId, schoolId, teacher) {
+  if(confirm(`Mark ${teacher}'s school as "Won't Submit Demographics"?\n\n⚠️ Use this after:\n• 72hr reminder sent\n• 14+ days with no response\n• Multiple follow-ups failed\n\nThis will:\n✅ Allow presenter to complete session\n⚠️ Mark demographics as permanently incomplete\n\nProceed?`)) {
+    alert(`✅ ${teacher}'s school marked as won't submit\n\nIn real system:\n• Update SessionSchool__c.Status__c = "Demographics_Wont_Submit"\n• Update SessionSchool__c.Demographics_Complete__c = FALSE\n• Allow Session__c to be marked complete despite incomplete demographics\n• Email presenter: "School marked as won't submit - you can now complete session"`);
+  }
+}
+</script>
+
+</body></html>
