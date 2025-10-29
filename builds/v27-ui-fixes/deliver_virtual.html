@@ -1,0 +1,1188 @@
+<!doctype html><html lang='en-AU'><head><meta charset='utf-8'/><meta name='viewport' content='width=device-width,initial-scale=1'/><title>Deliver Virtual Session</title>
+<style>
+.skip-link{position:absolute;left:-999px;top:auto;width:1px;height:1px;overflow:hidden}
+.skip-link:focus{position:fixed;left:16px;top:16px;width:auto;height:auto;padding:12px 16px;background:var(--charcoal);color:var(--white);z-index:10000;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.25)}
+
+:root{--ink:#111827;--charcoal:#1f2937;--muted:#6b7280;--bg:#f3f4f6;--white:#fff;--line:#e5e7eb;--green:#0a7d57;--red:#c62828}
+*{box-sizing:border-box}body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;background:var(--bg);color:var(--charcoal)}
+a{color:var(--charcoal);text-decoration:none}
+.wrap{max-width:700px;margin:0 auto;padding:12px}
+.card{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:12px}
+.btn{display:block;background:var(--charcoal);color:#fff;padding:14px;border-radius:10px;border:0;cursor:pointer;font-size:16px;font-weight:600;text-align:center;width:100%;transition:all 0.2s}
+.btn:hover{opacity:0.9}
+.btn.primary{background:var(--green)}
+.btn.secondary{background:#3b82f6}
+.btn.ghost{background:transparent;color:var(--charcoal);border:1px solid var(--line)}
+.btn.small{padding:8px 12px;font-size:13px;width:auto}
+.btn.danger{background:var(--red)}
+input,select,textarea{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:15px}
+label{display:block;font-weight:600;margin-top:12px;margin-bottom:6px}
+.muted{color:var(--muted);font-size:13px}
+header{position:sticky;top:0;z-index:50;background:#fff;border-bottom:1px solid #e5e7eb;padding:12px 0}
+.qr-fullscreen{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:#fff;z-index:9999;justify-content:center;align-items:center;flex-direction:column}
+.qr-fullscreen.active{display:flex}
+.school-status{display:flex;align-items:center;justify-content:space-between;padding:12px;background:#F9FAFB;border:2px solid #e5e7eb;border-radius:8px;margin-bottom:8px}
+.school-status.submitted{background:#D1FAE5;border-color:#A7F3D0}
+.school-status.wont-submit{background:#FEE2E2;border-color:#FCA5A5;opacity:0.7}
+.school-status.didnt-attend{background:#FEF3C7;border-color:#FDE68A;opacity:0.7}
+.success{background:#D1FAE5;border:1px solid #A7F3D0;color:#065F46;padding:12px;border-radius:8px;margin:12px 0}
+.warning{background:#FEF3C7;border:1px solid #FDE68A;color:#92400e;padding:12px;border-radius:8px;margin:12px 0}
+.error{background:#FEE2E2;border:1px solid #FCA5A5;color:#991B1B;padding:12px;border-radius:8px;margin:12px 0}
+
+/* === MINIMAL FILTER CHIPS (Added for MVP filtering) === */
+.filter-chips-row{padding:10px 12px;background:#fff;border-bottom:1px solid #e5e7eb;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.filter-chip{background:#f3f4f6;color:#1f2937;padding:6px 12px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:2px solid #e5e7eb;transition:all 0.2s;white-space:nowrap}
+.filter-chip:hover{background:#e5e7eb}
+.filter-chip.active{background:#EFF6FF;border-color:#3b82f6;color:#1e40af}
+.filter-section-label{font-size:11px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-right:6px}
+</style>
+</head><body>
+<a class="skip-link" href="#main-content">Skip to main content</a>
+<header>
+<div class="wrap" style="display:flex;align-items:center;justify-content:space-between;">
+<strong>Deliver Virtual Session</strong>
+<a class="btn ghost small" href="index.html">Index</a>
+</div>
+<div class="wrap" style="padding-top:8px;border-top:1px solid #e5e7eb;margin-top:8px;">
+<div style="display:flex;gap:16px;align-items:center;">
+<label style="display:flex;align-items:center;gap:6px;margin:0;font-weight:400;cursor:pointer;">
+<input type="radio" name="sessionFilter" value="mine" checked onchange="toggleSessionFilter()" style="width:auto;margin:0;">
+My Sessions
+</label>
+<label style="display:flex;align-items:center;gap:6px;margin:0;font-weight:400;cursor:pointer;">
+<input type="radio" name="sessionFilter" value="all" onchange="toggleSessionFilter()" style="width:auto;margin:0;">
+Show All
+</label>
+</div>
+<div id="ShowAllWarning" style="display:none;margin-top:8px;padding:8px;background:#FEF3C7;border-radius:6px;font-size:12px;color:#92400e;">
+⚠️ Showing all sessions. Only deliver if covering another presenter.
+</div>
+</div>
+</header>
+
+<!-- Filter Chips Row (Added for MVP date/status filtering) -->
+<div class="filter-chips-row" id="FilterChipsRow">
+<span class="filter-section-label">Date:</span>
+<button type="button" class="filter-chip" data-filter="date" data-value="past_7" onclick="toggleDateFilter('past_7')" aria-pressed="false">Past 7 days</button>
+<button type="button" class="filter-chip active" data-filter="date" data-value="upcoming_90" onclick="toggleDateFilter('upcoming_90')" aria-pressed="true">Next 90 days</button>
+<button type="button" class="filter-chip" data-filter="date" data-value="this_year" onclick="toggleDateFilter('this_year')" aria-pressed="false">This Year</button>
+<span class="filter-section-label" style="margin-left:12px;">Status:</span>
+<button type="button" class="filter-chip active" data-filter="status" data-value="Scheduled" onclick="toggleStatusFilter('Scheduled')" aria-pressed="true">Scheduled</button>
+<button type="button" class="filter-chip" data-filter="status" data-value="Delivered" onclick="toggleStatusFilter('Delivered')" aria-pressed="false">Delivered</button>
+</div>
+
+<!-- Warning Banner (shown when viewing All Sessions) -->
+<div id="ShowAllWarningBanner" style="display:none;margin:12px;padding:10px;background:#FEF3C7;border-radius:8px;font-size:13px;color:#92400e;border:1px solid #FDE68A;">
+⚠️ <strong>Viewing All Sessions.</strong> Only deliver if covering someone else.
+</div>
+
+
+<main id="main-content" tabindex="-1" class='wrap' style='padding-top:12px;' role="main">
+
+<!-- STATE 1: Session List View (Default) -->
+<div id="SessionListView">
+<h2 style="margin:0 0 16px 0;">📅 My Sessions</h2>
+
+<!-- Current user's virtual session -->
+<div class="card" onclick="openSessionDetail('SESS-502')" style="cursor:pointer;border:2px solid #3b82f6;">
+<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px;">
+<div>
+<h3 style="margin:0 0 4px 0;">SESS-502 • Robotics Workshop</h3>
+<div class="muted">Today 10:00 AM • 3 schools • 🌐 Virtual</div>
+</div>
+<span style="background:#FEF3C7;color:#92400e;padding:4px 8px;border-radius:6px;font-size:12px;font-weight:600;">🔴 Not Started</span>
+</div>
+<div style="font-size:13px;color:#6b7280;margin-top:8px;">
+<strong>Presenters:</strong> Alex Brown + Jordan Smith<br>
+<strong>Schools:</strong> Redfern PS, Dubbo College, Kempsey PS
+</div>
+</div>
+
+</div>
+
+<!-- Additional Sessions (shown only when "Show All" is active) -->
+<div id="OtherSessionsList" style="display:none;">
+
+<div class="card" onclick="openSessionDetail('SESS-505')" style="cursor:pointer;border:2px solid #e5e7eb;">
+<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px;">
+<div>
+<h3 style="margin:0 0 4px 0;">SESS-505 • Marine Biology</h3>
+<div class="muted">Today 2:00 PM • 2 schools • 🌐 Virtual</div>
+</div>
+<span style="background:#FEF3C7;color:#92400e;padding:4px 8px;border-radius:6px;font-size:12px;font-weight:600;">🔴 Not Started</span>
+</div>
+<div style="font-size:13px;color:#6b7280;margin-top:8px;">
+<strong>Presenter:</strong> Sarah Wilson (solo)<br>
+<strong>Schools:</strong> Sydney HS, Newcastle Central PS
+</div>
+</div>
+
+</div>
+
+<!-- STATE 2: Session Detail View (Hidden by default) -->
+<div id="SessionDetailView" style="display:none;">
+<div id="BackToCompletenessLink" style="display:none;margin-bottom:12px;">
+<a href="data_completeness.html" style="color:#3b82f6;font-size:14px;text-decoration:none;">← Back to Data Completeness</a>
+</div>
+<button class="btn ghost small" onclick="backToSessionList()" style="margin-bottom:12px;width:auto;">← Back to Sessions</button>
+
+<div class="card">
+<h3 style="margin:0 0 4px 0;" id="SessionDetailTitle">Session: SESS-502</h3>
+<div class="muted" style="margin-bottom:12px;" id="SessionDetailSubtitle">Robotics Workshop • Today 10:00 AM • Virtual Delivery</div>
+
+<div class="warning" style="font-size:13px;">
+<strong>ℹ️ Virtual Session Data Collection</strong><br>
+Demographics are collected via teacher surveys. Use <strong>Send Links</strong> to email unique forms to each school. If schools don't respond, mark them "Won't Submit" after the reminder window.
+</div>
+<div id="PresenterInfo" style="display:none;padding:8px;background:#EFF6FF;border-radius:6px;margin-bottom:12px;font-size:13px;">
+<strong>Original Presenter:</strong> <span id="OriginalPresenterName">Alex Brown</span><br>
+<strong>You're covering this session</strong>
+</div>
+
+<div class="success" id="PresenterToolsOnline" style="display:flex;flex-direction:column;gap:12px;margin-bottom:12px;">
+  <div>
+    <strong>Presenter Tools Online</strong><br>
+    Monitor live attendance syncs to <code>Session__c</code> while auto-notifying <code>Survey_Response__c</code> when surveys fall behind.
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+    <button class="btn secondary small" type="button" onclick="openPresenterTools()">🌐 Open Presenter Tools</button>
+    <button class="btn ghost small" type="button" onclick="copyPresenterToolsLink()">🔗 Copy presenter link</button>
+  </div>
+  <p class="muted" id="PresenterToolsRestriction" style="margin:0;font-size:12px;">Visible when you are the assigned presenter.</p>
+</div>
+
+<!-- Editable Fields -->
+<div style="margin-top:12px;">
+<div data-edit-key="facilitator" style="padding:12px;background:#F9FAFB;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:8px;">
+<label style="font-size:13px;margin-bottom:4px;color:#6b7280;">Presenter</label>
+<div style="font-size:15px;font-weight:600;margin:4px 0;" id="PresenterDisplay">Alex Brown</div>
+<button class="btn ghost small" onclick="openChangePresenter()" style="margin-top:4px;">✏️ Change Presenter</button>
+</div>
+
+<div style="padding:12px;background:#F9FAFB;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:8px;">
+<label style="font-size:13px;margin-bottom:4px;color:#6b7280;">Supporting Presenters</label>
+<div style="font-size:15px;font-weight:600;margin:4px 0;" id="SupportingDisplay">Jordan Smith</div>
+<div style="margin-top:4px;display:flex;gap:8px;">
+<button class="btn ghost small" onclick="openEditSupporters()">✏️ Edit Supporters</button>
+<button class="btn ghost small" onclick="openAddSupporter()">➕ Add Supporter</button>
+</div>
+</div>
+
+<div style="padding:12px;background:#F9FAFB;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:12px;">
+<label style="font-size:13px;margin-bottom:4px;color:#6b7280;">Topic</label>
+<div style="font-size:15px;font-weight:600;margin:4px 0;" id="TopicDisplay">Robotics Workshop</div>
+<button class="btn ghost small" onclick="openChangeTopic()" style="margin-top:4px;">✏️ Change Topic</button>
+</div>
+</div>
+
+<button class="btn primary" onclick="startVirtualDelivery()" style="width:100%;padding:14px;font-size:16px;">
+🚀 Start Virtual Delivery
+</button>
+</div>
+</div>
+
+<!-- STATE 3: Send Links View (Hidden by default) -->
+<div id="SendLinksView" style="display:none;">
+<button class="btn ghost small" onclick="backToSessionDetail()" style="margin-bottom:12px;width:auto;">← Back to Session</button>
+
+<div class="warning">
+<strong>ℹ️ Virtual Session Mode</strong><br>
+For online sessions, teachers receive ONE email with links to:
+<ul style="margin:8px 0 0 20px;">
+<li><strong>Demographics Form</strong> (TotalStudents, YearLevels, ATSI)</li>
+<li><strong>Teacher Feedback Survey</strong> (Post-session attendance/feedback)</li>
+</ul>
+Both links included in single email. Auto-reminders at 24hr / 48hr / 72hr (CC coordinator).
+</div>
+
+<div class="card">
+<h3 style="margin:0 0 12px 0;">📧 Send Demographics + Feedback Links</h3>
+<div class="muted" style="margin-bottom:16px;">Send combined email with both demographics form and feedback survey links to each teacher</div>
+
+<div id="SchoolList" data-edit-key="counts">
+
+<div class="school-status" id="school-redfern">
+<div style="flex:1;">
+<strong>Redfern Public School</strong>
+<div class="muted" style="font-size:12px;margin-top:2px;">Contact: Ms. Emma Riley • emma.riley@redfern.nsw.edu.au</div>
+<div id="redfern-status" style="margin-top:6px;">
+<span style="color:#9ca3af;font-size:13px;">⏳ Not sent</span>
+</div>
+</div>
+<div style="display:flex;gap:8px;">
+<button class="btn secondary small" onclick="sendLinks('redfern')" id="btn-redfern">Send Links</button>
+</div>
+</div>
+
+<div class="school-status" id="school-dubbo">
+<div style="flex:1;">
+<strong>Dubbo College</strong>
+<div class="muted" style="font-size:12px;margin-top:2px;">Contact: Mr. John Chen • john.chen@dubbo.nsw.edu.au</div>
+<div id="dubbo-status" style="margin-top:6px;">
+<span style="color:#9ca3af;font-size:13px;">⏳ Not sent</span>
+</div>
+</div>
+<div style="display:flex;gap:8px;">
+<button class="btn secondary small" onclick="sendLinks('dubbo')" id="btn-dubbo">Send Links</button>
+</div>
+</div>
+
+<div class="school-status" id="school-kempsey">
+<div style="flex:1;">
+<strong>Kempsey Public School</strong>
+<div class="muted" style="font-size:12px;margin-top:2px;">Contact: Mrs. Sarah Lee • sarah.lee@kempsey.nsw.edu.au</div>
+<div id="kempsey-status" style="margin-top:6px;">
+<span style="color:#9ca3af;font-size:13px;">⏳ Not sent</span>
+</div>
+</div>
+<div style="display:flex;gap:8px;">
+<button class="btn secondary small" onclick="sendLinks('kempsey')" id="btn-kempsey">Send Links</button>
+</div>
+</div>
+
+</div>
+
+<div style="padding:12px;background:#DBEAFE;border:1px solid #93C5FD;border-radius:8px;margin-top:16px;">
+<strong style="color:#1E40AF;">📋 What Teachers Receive:</strong>
+<div style="margin-top:8px;font-size:13px;color:#1E3A8A;">
+<strong>Email Subject:</strong> "Session Follow-Up: Demographics + Feedback"<br><br>
+<strong>Two Links:</strong>
+<ul style="margin:4px 0 0 20px;">
+<li><strong>Demographics Form</strong> (TotalStudents, YearLevels, ATSI) - Required for reporting</li>
+<li><strong>Feedback Survey</strong> (Your attendance/experience feedback)</li>
+</ul>
+<strong>Footer Note:</strong> "P.S. If students missed the survey, they can still complete it here: [student survey link]"
+</div>
+</div>
+
+<div class="success" style="margin-top:16px;">
+<strong>✉️ Auto-Reminders Enabled</strong><br>
+Both forms have reminders:
+<ul style="margin:8px 0 0 20px;">
+<li>24hr if not completed</li>
+<li>48hr if still incomplete</li>
+<li>72hr final reminder (CC coordinator)</li>
+</ul>
+</div>
+
+<div style="margin-top:16px;">
+<button class="btn primary" onclick="sendAllLinks()">📧 Send All Links at Once</button>
+</div>
+</div>
+
+<div class="card">
+<h3 style="margin:0 0 12px 0;">📱 Student Survey QR Code</h3>
+<div class="muted" style="margin-bottom:12px;">Show this QR code to students during the virtual session (share screen)</div>
+
+<div style="text-align:center;padding:20px;background:#f9fafb;border-radius:8px;">
+<svg width="200" height="200" viewBox="0 0 200 200" style="margin:0 auto;background:#fff;padding:12px;border:2px solid #e5e7eb;border-radius:8px;">
+<rect width="200" height="200" fill="white"/>
+<rect x="15" y="15" width="45" height="45" fill="black"/>
+<rect x="140" y="15" width="45" height="45" fill="black"/>
+<rect x="15" y="140" width="45" height="45" fill="black"/>
+<rect x="22" y="22" width="30" height="30" fill="white"/>
+<rect x="147" y="22" width="30" height="30" fill="white"/>
+<rect x="22" y="147" width="30" height="30" fill="white"/>
+<rect x="70" y="70" width="60" height="60" fill="black"/>
+</svg>
+<div style="font-size:18px;margin-top:12px;color:#6b7280;font-weight:600;">forms.deadlyscience.org.au/survey/SESS-502</div>
+<div style="margin-top:8px;font-size:13px;color:#9ca3af;">Students can type this URL if they can't scan</div>
+</div>
+
+<button class="btn secondary" onclick="showQRFullScreen()" style="margin-top:12px;">📺 Full Screen QR Code</button>
+<div class="muted" style="margin-top:8px;text-align:center;">Share your screen and show full-screen QR for easy scanning</div>
+
+<div class="warning" style="margin-top:12px;">
+<strong>💡 Backup Method</strong><br>
+Show the URL (forms.deadlyscience.org.au/survey/SESS-502) so students can type it if QR scanning doesn't work.
+</div>
+</div>
+
+<div class="card" id="ActionsCard">
+<h3 style="margin:0 0 12px 0;">⚙️ School Actions</h3>
+<div class="muted" style="margin-bottom:12px;">Manage schools that didn't attend or won't submit</div>
+
+<div style="margin-bottom:12px;">
+<label>Select School</label>
+<select id="ActionSchool">
+<option value="redfern">Redfern Public School</option>
+<option value="dubbo">Dubbo College</option>
+<option value="kempsey">Kempsey Public School</option>
+</select>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+<button class="btn danger small" onclick="markDidntAttend()">⏭️ Didn't Attend</button>
+<button class="btn danger small" onclick="markWontSubmit()">🚫 Won't Submit</button>
+</div>
+
+<div id="reasonSection" style="display:none;margin-top:12px;">
+<label>Reason / Notes</label>
+<textarea id="ActionReason" rows="2" placeholder="e.g., School cancelled last minute"></textarea>
+<button class="btn primary" onclick="saveAction()" style="margin-top:8px;">Save</button>
+</div>
+</div>
+
+<div class="card" id="CompleteCard">
+<h3 style="margin:0 0 12px 0;">✅ Complete Session</h3>
+
+<div id="CompletionWarning" class="warning" style="display:none;">
+⚠️ Not all schools have submitted. You can mark complete anyway, but reporting will show incomplete data.
+</div>
+
+<div id="CompletionSummary" style="margin-bottom:12px;"></div>
+
+<button class="btn primary" onclick="markComplete()">✓ Mark Session Complete</button>
+<div class="muted" style="margin-top:8px;font-size:12px;">Best practice: Wait for demographics, but you can complete if schools won't submit</div>
+</div>
+
+<div class="qr-fullscreen" id="QRFullScreen">
+<div style="text-align:center;padding:24px;">
+<h2 style="margin:0 0 8px 0;">📱 Student Survey</h2>
+<div style="color:#6b7280;margin-bottom:24px;">Scan this QR code to complete the survey</div>
+<div style="background:white;padding:24px;border-radius:16px;display:inline-block;">
+<svg width="280" height="280" viewBox="0 0 280 280">
+<rect width="280" height="280" fill="white"/>
+<rect x="20" y="20" width="60" height="60" fill="black"/>
+<rect x="200" y="20" width="60" height="60" fill="black"/>
+<rect x="20" y="200" width="60" height="60" fill="black"/>
+<rect x="30" y="30" width="40" height="40" fill="white"/>
+<rect x="210" y="30" width="40" height="40" fill="white"/>
+<rect x="30" y="210" width="40" height="40" fill="white"/>
+<rect x="100" y="100" width="80" height="80" fill="black"/>
+</svg>
+</div>
+<div style="margin-top:24px;color:#6b7280;font-size:14px;">https://forms.deadlyscience.org.au/survey/SESS-502</div>
+<div style="margin-top:16px;color:#6b7280;font-size:13px;">Tap anywhere to close</div>
+</div>
+</div>
+
+</div>
+<!-- End SendLinksView -->
+
+<!-- Modals for editing session details -->
+
+<!-- Modal for changing presenter -->
+<div id="ChangePresenterModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;">
+<div style="background:white;border-radius:12px;padding:20px;max-width:350px;width:90%;margin:0 auto;">
+<h3 style="margin:0 0 12px 0;">Change Presenter</h3>
+<label style="font-size:13px;margin-bottom:6px;">Select new presenter:</label>
+<select id="PresenterField" style="font-size:14px;padding:10px;margin-bottom:12px;">
+<option value="Alex Brown">Alex Brown</option>
+<option value="Jordan Smith">Jordan Smith</option>
+<option value="Casey Lee">Casey Lee</option>
+<option value="Sarah Wilson">Sarah Wilson</option>
+<option value="Rob Chen">Rob Chen</option>
+</select>
+<div style="display:flex;gap:8px;justify-content:flex-end;">
+<button class="btn ghost small" onclick="cancelChangePresenter()">Cancel</button>
+<button class="btn primary small" onclick="confirmChangePresenter()">✅ Confirm</button>
+</div>
+</div>
+</div>
+
+<!-- Modal for editing supporters -->
+<div id="EditSupportersModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;">
+<div style="background:white;border-radius:12px;padding:20px;max-width:350px;width:90%;margin:0 auto;">
+<h3 style="margin:0 0 12px 0;">Edit Supporting Presenters</h3>
+<div id="SupportersList" style="margin-bottom:12px;"></div>
+<label style="font-size:13px;margin-bottom:6px;">Add supporter:</label>
+<select id="AddSupporterField" style="font-size:14px;padding:10px;margin-bottom:12px;">
+<option value="">-- Select --</option>
+<option value="Alex Brown">Alex Brown</option>
+<option value="Jordan Smith">Jordan Smith</option>
+<option value="Casey Lee">Casey Lee</option>
+<option value="Sarah Wilson">Sarah Wilson</option>
+<option value="Rob Chen">Rob Chen</option>
+</select>
+<button class="btn secondary small" onclick="addSupporterToList()" style="width:100%;margin-bottom:12px;">➕ Add</button>
+<div style="display:flex;gap:8px;justify-content:flex-end;">
+<button class="btn ghost small" onclick="cancelEditSupporters()">Cancel</button>
+<button class="btn primary small" onclick="confirmEditSupporters()">✅ Save</button>
+</div>
+</div>
+</div>
+
+<!-- Modal for changing topic -->
+<div id="ChangeTopicModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;">
+<div style="background:white;border-radius:12px;padding:20px;max-width:350px;width:90%;margin:0 auto;">
+<h3 style="margin:0 0 12px 0;">Change Topic</h3>
+<label style="font-size:13px;margin-bottom:6px;">Select new topic:</label>
+<select id="TopicField" style="font-size:14px;padding:10px;margin-bottom:12px;">
+<option value="Robotics Workshop">Robotics Workshop</option>
+<option value="Coding Fundamentals">Coding Fundamentals</option>
+<option value="Marine Biology">Marine Biology</option>
+<option value="Astronomy & Space">Astronomy & Space</option>
+<option value="Chemistry Experiments">Chemistry Experiments</option>
+<option value="Engineering Design">Engineering Design</option>
+</select>
+<div style="display:flex;gap:8px;justify-content:flex-end;">
+<button class="btn ghost small" onclick="cancelChangeTopic()">Cancel</button>
+<button class="btn primary small" onclick="confirmChangeTopic()">✅ Confirm</button>
+</div>
+</div>
+</div>
+
+</main>
+
+<script>
+// v25: Deep link scroll targeting and conditional back link
+(function() {
+  // Check if arriving from Data Completeness page
+  if (document.referrer.includes('data_completeness.html')) {
+    const backLink = document.getElementById('BackToCompletenessLink');
+    if (backLink) {
+      backLink.style.display = 'block';
+    }
+  }
+  
+  // Handle ?edit= query parameter for scroll targeting
+  const urlParams = new URLSearchParams(window.location.search);
+  const editKey = urlParams.get('edit'); // First value only
+  
+  if (editKey) {
+    // Wait for page to load and session detail to be visible
+    window.addEventListener('load', function() {
+      // Map edit keys to selectors
+      const keyMap = {
+        'counts': '[data-edit-key="counts"]',
+        'funding': '[data-edit-key="funding"]',
+        'facilitator': '[data-edit-key="facilitator"]',
+        'all': '[data-edit-key="counts"]' // Default to first editable section
+      };
+      
+      const selector = keyMap[editKey] || keyMap['all'];
+      const target = document.querySelector(selector);
+      
+      if (target) {
+        setTimeout(function() {
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 300); // Delay to ensure view is visible
+      }
+    });
+  }
+})();
+
+// Session state management
+let currentView = 'list'; // 'list', 'detail', 'links'
+let currentSessionId = null;
+let showAllSessions = false;
+const currentUser = 'Alex Brown';
+
+// Session data
+const originalValues = {
+  Presenter: 'Alex Brown',
+  Supporting_Presenters: ['Jordan Smith'],
+  Topic: 'Robotics Workshop'
+};
+
+const modifiedFields = new Set();
+const auditLog = [];
+
+const sessionData = {
+  'SESS-502': {
+    id: 'SESS-502',
+    title: 'Robotics Workshop',
+    time: 'Today 10:00 AM',
+    presenter: 'Alex Brown',
+    supporters: ['Jordan Smith'],
+    topic: 'Robotics Workshop',
+    schools: 3,
+    isVirtual: true,
+    isMine: true
+  },
+  'SESS-505': {
+    id: 'SESS-505',
+    title: 'Marine Biology',
+    time: 'Today 2:00 PM',
+    presenter: 'Sarah Wilson',
+    supporters: [],
+    topic: 'Marine Biology',
+    schools: 2,
+    isVirtual: true,
+    isMine: false
+  }
+};
+
+function getPresenterToolsLink() {
+  if (!currentSessionId) {
+    return '';
+  }
+  return `https://deadlyscience.org/presenter-tools?session=${currentSessionId}&mode=virtual`;
+}
+
+function openPresenterTools() {
+  const link = getPresenterToolsLink();
+  if (!link) {
+    alert('Select a session to launch Presenter Tools Online.');
+    return;
+  }
+  window.open(link, '_blank', 'noopener=yes');
+}
+
+function copyPresenterToolsLink() {
+  const link = getPresenterToolsLink();
+  if (!link) {
+    alert('Select a session before copying the presenter link.');
+    return;
+  }
+
+  const onSuccess = () => {
+    alert(`✅ Presenter Tools link copied!\n\n${link}`);
+  };
+
+  const onFailure = () => {
+    const helper = document.createElement('textarea');
+    helper.value = link;
+    helper.setAttribute('readonly', '');
+    helper.style.position = 'absolute';
+    helper.style.left = '-9999px';
+    document.body.appendChild(helper);
+    helper.select();
+    document.execCommand('copy');
+    document.body.removeChild(helper);
+    alert(`✅ Presenter Tools link copied!\n\n${link}`);
+  };
+
+  if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+    navigator.clipboard.writeText(link).then(onSuccess).catch(onFailure);
+  } else {
+    onFailure();
+  }
+}
+
+// Navigation functions
+function toggleSessionFilter() {
+  const filterValue = document.querySelector('input[name="sessionFilter"]:checked').value;
+  showAllSessions = (filterValue === 'all');
+  
+  document.getElementById('ShowAllWarning').style.display = showAllSessions ? 'block' : 'none';
+  document.getElementById('OtherSessionsList').style.display = showAllSessions ? 'block' : 'none';
+  
+  console.log('Session Filter:', showAllSessions ? 'Show All' : 'My Sessions');
+}
+
+function openSessionDetail(sessionId) {
+  currentSessionId = sessionId;
+  const session = sessionData[sessionId];
+  
+  // Show coverage warning if not your session
+  if (!session.isMine && showAllSessions) {
+    if (!confirm(`⚠️ You're about to open session ${sessionId} which is assigned to ${session.presenter}.\n\nThis will be logged as coverage. Continue?`)) {
+      return;
+    }
+    document.getElementById('PresenterInfo').style.display = 'block';
+    document.getElementById('OriginalPresenterName').textContent = session.presenter;
+  } else {
+    document.getElementById('PresenterInfo').style.display = 'none';
+  }
+
+  const toolsContainer = document.getElementById('PresenterToolsOnline');
+  const toolsRestriction = document.getElementById('PresenterToolsRestriction');
+  if (toolsContainer && toolsRestriction) {
+    toolsContainer.style.display = 'flex';
+    if (session.presenter === currentUser) {
+      toolsRestriction.textContent = 'Presenter Tools tracks Session__c attendance and Survey_Response__c reminders in edit mode for you.';
+    } else {
+      toolsRestriction.textContent = `You are covering for ${session.presenter}. Presenter Tools opens read-only while Session__c.Presenter__c stays ${session.presenter}.`;
+    }
+  }
+
+  // Update session detail view
+  document.getElementById('SessionDetailTitle').textContent = `Session: ${sessionId}`;
+  document.getElementById('SessionDetailSubtitle').textContent = `${session.title} • ${session.time} • Virtual Delivery`;
+  document.getElementById('PresenterDisplay').textContent = session.presenter;
+  document.getElementById('SupportingDisplay').textContent = session.supporters.length > 0 ? session.supporters.join(', ') : 'None';
+  document.getElementById('TopicDisplay').textContent = session.topic;
+  
+  // Update originalValues
+  originalValues.Presenter = session.presenter;
+  originalValues.Supporting_Presenters = [...session.supporters];
+  originalValues.Topic = session.topic;
+  
+  // Switch views
+  document.getElementById('SessionListView').style.display = 'none';
+  document.getElementById('SessionDetailView').style.display = 'block';
+  document.getElementById('SendLinksView').style.display = 'none';
+  
+  currentView = 'detail';
+  
+  console.log('Opened session detail:', sessionId);
+}
+
+function backToSessionList() {
+  document.getElementById('SessionListView').style.display = 'block';
+  document.getElementById('SessionDetailView').style.display = 'none';
+  document.getElementById('SendLinksView').style.display = 'none';
+  
+  currentView = 'list';
+  currentSessionId = null;
+  
+  console.log('Back to session list');
+}
+
+function startVirtualDelivery() {
+  document.getElementById('SessionDetailView').style.display = 'none';
+  document.getElementById('SendLinksView').style.display = 'block';
+  
+  currentView = 'links';
+  
+  console.log('Started virtual delivery for session:', currentSessionId);
+}
+
+function backToSessionDetail() {
+  document.getElementById('SessionDetailView').style.display = 'block';
+  document.getElementById('SendLinksView').style.display = 'none';
+  
+  currentView = 'detail';
+  
+  console.log('Back to session detail');
+}
+
+// Modal functions for presenter
+function openChangePresenter() {
+  const currentPresenter = document.getElementById('PresenterDisplay').textContent;
+  document.getElementById('PresenterField').value = currentPresenter;
+  document.getElementById('ChangePresenterModal').style.display = 'flex';
+}
+
+function cancelChangePresenter() {
+  document.getElementById('ChangePresenterModal').style.display = 'none';
+}
+
+function confirmChangePresenter() {
+  const newValue = document.getElementById('PresenterField').value;
+  const oldValue = originalValues.Presenter;
+  
+  if (newValue !== oldValue) {
+    document.getElementById('PresenterDisplay').textContent = newValue;
+    logChange('Presenter', oldValue, newValue);
+    modifiedFields.add('Presenter');
+  }
+  
+  cancelChangePresenter();
+}
+
+// Modal functions for supporters
+function openEditSupporters() {
+  renderSupportersList();
+  document.getElementById('EditSupportersModal').style.display = 'flex';
+}
+
+function openAddSupporter() {
+  openEditSupporters();
+}
+
+function renderSupportersList() {
+  const supportersText = document.getElementById('SupportingDisplay').textContent;
+  const supporters = supportersText === 'None' ? [] : supportersText.split(', ');
+  
+  let html = '';
+  supporters.forEach((supporter, index) => {
+    html += `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px;background:#F9FAFB;border-radius:6px;margin-bottom:4px;">
+        <span>${supporter}</span>
+        <button class="btn danger small" onclick="removeSupporterAt(${index})" style="padding:4px 8px;">✕</button>
+      </div>
+    `;
+  });
+  
+  document.getElementById('SupportersList').innerHTML = html || '<div class="muted">No supporters added yet</div>';
+}
+
+function removeSupporterAt(index) {
+  const supportersText = document.getElementById('SupportingDisplay').textContent;
+  const supporters = supportersText.split(', ');
+  supporters.splice(index, 1);
+  document.getElementById('SupportingDisplay').textContent = supporters.length > 0 ? supporters.join(', ') : 'None';
+  renderSupportersList();
+}
+
+function addSupporterToList() {
+  const newSupporter = document.getElementById('AddSupporterField').value;
+  
+  if (!newSupporter) {
+    alert('Please select a supporter to add');
+    return;
+  }
+  
+  const supportersText = document.getElementById('SupportingDisplay').textContent;
+  const supporters = supportersText === 'None' ? [] : supportersText.split(', ');
+  
+  if (supporters.includes(newSupporter)) {
+    alert('This person is already a supporter');
+    return;
+  }
+  
+  supporters.push(newSupporter);
+  document.getElementById('SupportingDisplay').textContent = supporters.join(', ');
+  document.getElementById('AddSupporterField').value = '';
+  renderSupportersList();
+}
+
+function cancelEditSupporters() {
+  document.getElementById('EditSupportersModal').style.display = 'none';
+  document.getElementById('AddSupporterField').value = '';
+}
+
+function confirmEditSupporters() {
+  const oldValue = originalValues.Supporting_Presenters.join(', ');
+  const newValue = document.getElementById('SupportingDisplay').textContent;
+  
+  if (oldValue !== newValue) {
+    logChange('Supporting Presenters', oldValue, newValue);
+    modifiedFields.add('Supporting_Presenters');
+  }
+  
+  cancelEditSupporters();
+}
+
+// Modal functions for topic
+function openChangeTopic() {
+  const currentTopic = document.getElementById('TopicDisplay').textContent;
+  document.getElementById('TopicField').value = currentTopic;
+  document.getElementById('ChangeTopicModal').style.display = 'flex';
+}
+
+function cancelChangeTopic() {
+  document.getElementById('ChangeTopicModal').style.display = 'none';
+}
+
+function confirmChangeTopic() {
+  const newValue = document.getElementById('TopicField').value;
+  const oldValue = originalValues.Topic;
+  
+  if (newValue !== oldValue) {
+    document.getElementById('TopicDisplay').textContent = newValue;
+    logChange('Topic', oldValue, newValue);
+    modifiedFields.add('Topic');
+  }
+  
+  cancelChangeTopic();
+}
+
+// Audit logging
+function logChange(field, oldValue, newValue) {
+  const timestamp = new Date().toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' });
+  
+  const logEntry = {
+    field: field,
+    oldValue: oldValue,
+    newValue: newValue,
+    timestamp: timestamp,
+    source: 'Virtual Deliver App'
+  };
+  
+  auditLog.push(logEntry);
+  
+  console.log('🔄 Field Changed:', logEntry);
+  console.log('📤 Salesforce Updates:', {
+    object: 'Session__c',
+    recordId: currentSessionId,
+    fields: {
+      [`${field.replace(/ /g, '_')}__c`]: newValue,
+      'Last_Modified_By__c': 'Current User',
+      'Last_Modified_Date__c': new Date().toISOString()
+    }
+  });
+}
+
+// QR Code fullscreen
+function showQRFullScreen() {
+  document.getElementById('QRFullScreen').classList.add('active');
+}
+
+function hideQRFullScreen() {
+  document.getElementById('QRFullScreen').classList.remove('active');
+}
+
+// Click anywhere on QR fullscreen to close
+document.getElementById('QRFullScreen').addEventListener('click', function() {
+  hideQRFullScreen();
+});
+
+let actionMode = null;
+
+let schoolData = {
+  redfern: {name: 'Redfern Public School', contact: 'Ms. Emma Riley', email: 'emma.riley@redfern.nsw.edu.au', sent: false, submitted: false, status: 'pending'},
+  dubbo: {name: 'Dubbo College', contact: 'Mr. John Chen', email: 'john.chen@dubbo.nsw.edu.au', sent: false, submitted: false, status: 'pending'},
+  kempsey: {name: 'Kempsey Public School', contact: 'Mrs. Sarah Lee', email: 'sarah.lee@kempsey.nsw.edu.au', sent: false, submitted: false, status: 'pending'}
+};
+
+function sendLinks(schoolId) {
+  const school = schoolData[schoolId];
+  const now = new Date().toLocaleTimeString('en-AU', {hour: '2-digit', minute: '2-digit'});
+  
+  if(confirm(`Send combined email to ${school.contact}?\n\nEmail: ${school.email}\n\nIncludes:\n• Demographics form link\n• Teacher feedback survey link\n• Student survey link (footer)\n\n✉️ Auto-reminders:\n• 24hr / 48hr / 72hr (CC coordinator)`)) {
+    school.sent = true;
+    school.sentTime = now;
+    
+    const statusDiv = document.getElementById(schoolId + '-status');
+    statusDiv.innerHTML = `<span style="color:#3b82f6;font-size:13px;">✉️ Sent at ${now}</span>`;
+    
+    document.getElementById('btn-' + schoolId).disabled = true;
+    document.getElementById('btn-' + schoolId).textContent = 'Sent ✓';
+    
+    alert(`✅ Combined email sent to ${school.contact}!\n\nIn real system:\n• Email via Zapier with:\n  - Demographics Typeform link\n  - Feedback survey Typeform link\n  - Student survey link in footer\n• Schedule auto-reminders\n• Update SessionSchool__c.Links_Sent__c = TRUE`);
+    
+    // AUTO-SUBMIT after 3 seconds (simulating teacher completing forms quickly)
+    setTimeout(() => {
+      autoSubmitDemographics(schoolId);
+    }, 3000);
+    
+    updateCompleteButton();
+  }
+}
+
+function autoSubmitDemographics(schoolId) {
+  schoolData[schoolId].submitted = true;
+  schoolData[schoolId].status = 'submitted';
+  
+  const card = document.getElementById('school-' + schoolId);
+  card.classList.add('submitted');
+  
+  // Generate random demo stats
+  const totalStudents = Math.floor(Math.random() * 30) + 15; // 15-45 students
+  const atsi = Math.floor(Math.random() * (totalStudents / 2)); // 0-50% ATSI
+  const years = ['7','8','9','10'].slice(0, Math.floor(Math.random() * 3) + 1).join(', ');
+  
+  const statusDiv = document.getElementById(schoolId + '-status');
+  statusDiv.innerHTML = `
+    <span style="color:#065F46;font-size:13px;font-weight:600;">✓ Submitted</span>
+    <div style="margin-top:4px;font-size:11px;color:#065F46;">
+      ${totalStudents} students • ${atsi} ATSI • Years ${years}
+    </div>
+  `;
+  
+  updateCompleteButton();
+}
+
+function resendLinks(schoolId) {
+  const school = schoolData[schoolId];
+  if(confirm(`Resend links to ${school.contact}?\n\n✉️ Auto-reminders will restart`)) {
+    alert(`✅ Links resent to ${school.contact}`);
+  }
+}
+
+function sendAllLinks() {
+  const unsent = Object.keys(schoolData).filter(id => !schoolData[id].sent);
+  
+  if(unsent.length === 0) {
+    alert('All links already sent!');
+    return;
+  }
+  
+  if(confirm(`Send combined emails to ${unsent.length} school(s)?\n\n✉️ Each email includes:\n• Demographics form\n• Feedback survey\n• Student survey link\n\nAuto-reminders: 24hr / 48hr / 72hr`)) {
+    unsent.forEach((id, index) => {
+      schoolData[id].sent = true;
+      const now = new Date().toLocaleTimeString('en-AU', {hour: '2-digit', minute: '2-digit'});
+      
+      const statusDiv = document.getElementById(id + '-status');
+      statusDiv.innerHTML = `<span style="color:#3b82f6;font-size:13px;">✉️ Sent at ${now}</span>`;
+      
+      document.getElementById('btn-' + id).disabled = true;
+      document.getElementById('btn-' + id).textContent = 'Sent ✓';
+      
+      // AUTO-SUBMIT after staggered delays (3s, 4s, 5s...)
+      setTimeout(() => {
+        autoSubmitDemographics(id);
+      }, 3000 + (index * 1000));
+    });
+    
+    alert(`✅ ${unsent.length} email(s) sent!\n\nIn real system: Bulk email via Zapier`);
+    updateCompleteButton();
+  }
+}
+
+function markDidntAttend() {
+  actionMode = 'didnt_attend';
+  document.getElementById('reasonSection').style.display = 'block';
+  document.getElementById('ActionReason').placeholder = 'e.g., School cancelled last minute';
+}
+
+function markWontSubmit() {
+  actionMode = 'wont_submit';
+  document.getElementById('reasonSection').style.display = 'block';
+  document.getElementById('ActionReason').placeholder = 'e.g., After 72hr reminder, no response for 14+ days';
+}
+
+function saveAction() {
+  const schoolId = document.getElementById('ActionSchool').value;
+  const reason = document.getElementById('ActionReason').value;
+  const school = schoolData[schoolId];
+  
+  if(!reason.trim()) {
+    alert('Please enter a reason');
+    return;
+  }
+  
+  school.status = actionMode;
+  school.skipReason = reason;
+  
+  const card = document.getElementById('school-' + schoolId);
+  if(actionMode === 'didnt_attend') {
+    card.classList.add('didnt-attend');
+  } else if(actionMode === 'wont_submit') {
+    card.classList.add('wont-submit');
+  }
+  
+  const statusDiv = document.getElementById(schoolId + '-status');
+  const label = actionMode === 'didnt_attend' ? '⏭️ Didn\'t Attend' : '🚫 Won\'t Submit';
+  statusDiv.innerHTML = `<span style="font-weight:600;">${label}</span><div class="muted" style="font-size:11px;margin-top:2px;">${reason}</div>`;
+  
+  document.getElementById('reasonSection').style.display = 'none';
+  document.getElementById('ActionReason').value = '';
+  actionMode = null;
+  
+  alert(`✅ School marked as: ${label}\n\nIn real system: Update SessionSchool__c.Status__c`);
+  updateCompleteButton();
+}
+
+function updateCompleteButton() {
+  const submitted = Object.values(schoolData).filter(s => s.submitted).length;
+  const wontSubmit = Object.values(schoolData).filter(s => s.status === 'wont_submit').length;
+  const didntAttend = Object.values(schoolData).filter(s => s.status === 'didnt_attend').length;
+  const total = Object.keys(schoolData).length;
+  
+  const allDone = Object.values(schoolData).every(s => 
+    s.submitted || s.status === 'wont_submit' || s.status === 'didnt_attend'
+  );
+  
+  let summary = `<div style="font-size:13px;">`;
+  summary += `Submitted: ${submitted}/${total}<br>`;
+  if(wontSubmit > 0) summary += `Won't Submit: ${wontSubmit}<br>`;
+  if(didntAttend > 0) summary += `Didn't Attend: ${didntAttend}`;
+  summary += `</div>`;
+  
+  document.getElementById('CompletionSummary').innerHTML = summary;
+  
+  if(!allDone && submitted < total) {
+    document.getElementById('CompletionWarning').style.display = 'block';
+  } else {
+    document.getElementById('CompletionWarning').style.display = 'none';
+  }
+}
+
+function markComplete() {
+  const submitted = Object.values(schoolData).filter(s => s.submitted).length;
+  const wontSubmit = Object.values(schoolData).filter(s => s.status === 'wont_submit').length;
+  const didntAttend = Object.values(schoolData).filter(s => s.status === 'didnt_attend').length;
+  const total = Object.keys(schoolData).length;
+  
+  let msg = `Mark session SESS-502 as complete?\n\n`;
+  msg += `Submitted: ${submitted}/${total}\n`;
+  if(wontSubmit > 0) msg += `Won't Submit: ${wontSubmit}\n`;
+  if(didntAttend > 0) msg += `Didn't Attend: ${didntAttend}`;
+  
+  if(confirm(msg)) {
+    alert('✓ Session SESS-502 marked complete!\n\nIn real system:\n• Update Session__c.Status__c = "Completed"\n• Demographics locked\n• Reporting reflects submission status');
+  }
+}
+
+function showQRFullScreen() {
+  document.getElementById('QRFullScreen').classList.add('active');
+}
+
+function hideQRFullScreen() {
+  document.getElementById('QRFullScreen').classList.remove('active');
+}
+
+// Initialize
+updateCompleteButton();
+
+// v25: Deep-link scroll targeting and conditional back link
+window.addEventListener('DOMContentLoaded', function() {
+  // Handle conditional back link visibility
+  if (document.referrer.includes('data_completeness.html')) {
+    const backLinkDiv = document.getElementById('BackToCompletenessLink');
+    if (backLinkDiv) {
+      backLinkDiv.style.display = 'block';
+    }
+  }
+  
+  // Handle edit parameter for scroll targeting
+  const urlParams = new URLSearchParams(window.location.search);
+  const editKey = urlParams.get('edit');
+  
+  if (editKey) {
+    const keyMap = {
+      'counts': '[data-edit-key="counts"]',
+      'funding': '[data-edit-key="funding"]',
+      'facilitator': '[data-edit-key="facilitator"]',
+      'all': '[data-edit-key="facilitator"]' // Default to first editable section
+    };
+    
+    const selector = keyMap[editKey] || keyMap['all'];
+    const target = document.querySelector(selector);
+    
+    if (target) {
+      // Small delay to ensure page is fully rendered
+      setTimeout(() => {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 300);
+    }
+  }
+});
+
+// === MINIMAL FILTER SYSTEM (Added for MVP) ===
+
+const userId = 'user_12345';
+const storageKey_deliver = 'ds_filters_deliver_virtual_' + userId;
+
+let filterState = {
+  dateRange: 'upcoming_90',
+  status: ['Scheduled']
+};
+
+// Load saved filters on init
+function initFilters() {
+  const saved = localStorage.getItem(storageKey_deliver);
+  if (saved) {
+    try {
+      filterState = JSON.parse(saved);
+    } catch (e) {
+      console.warn('Using default filters');
+    }
+  }
+  applyFilterUI();
+  filterSessions();
+}
+
+function toggleDateFilter(range) {
+  filterState.dateRange = range;
+  
+  // Update UI
+  document.querySelectorAll('[data-filter="date"]').forEach(btn => {
+    const isActive = btn.dataset.value === range;
+    btn.classList.toggle('active', isActive);
+    btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+  });
+  
+  saveAndApplyFilters();
+}
+
+function toggleStatusFilter(status) {
+  // Toggle status in array
+  const idx = filterState.status.indexOf(status);
+  if (idx > -1) {
+    if (filterState.status.length > 1) { // Keep at least one
+      filterState.status.splice(idx, 1);
+    }
+  } else {
+    filterState.status.push(status);
+  }
+  
+  // Update UI
+  document.querySelectorAll('[data-filter="status"]').forEach(btn => {
+    const isActive = filterState.status.includes(btn.dataset.value);
+    btn.classList.toggle('active', isActive);
+    btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+  });
+  
+  saveAndApplyFilters();
+}
+
+function saveAndApplyFilters() {
+  localStorage.setItem(storageKey_deliver, JSON.stringify(filterState));
+  filterSessions();
+}
+
+function applyFilterUI() {
+  // Set active state on chips based on filterState
+  document.querySelectorAll('[data-filter="date"]').forEach(btn => {
+    const isActive = btn.dataset.value === filterState.dateRange;
+    btn.classList.toggle('active', isActive);
+    btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+  });
+
+  document.querySelectorAll('[data-filter="status"]').forEach(btn => {
+    const isActive = filterState.status.includes(btn.dataset.value);
+    btn.classList.toggle('active', isActive);
+    btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+  });
+}
+
+function filterSessions() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  let rangeStart, rangeEnd;
+  
+  switch (filterState.dateRange) {
+    case 'past_7':
+      rangeStart = new Date(today);
+      rangeStart.setDate(rangeStart.getDate() - 7);
+      rangeEnd = today;
+      break;
+    case 'upcoming_90':
+      rangeStart = today;
+      rangeEnd = new Date(today);
+      rangeEnd.setDate(rangeEnd.getDate() + 90);
+      break;
+    case 'this_year':
+      rangeStart = new Date(today.getFullYear(), 0, 1);
+      rangeEnd = new Date(today.getFullYear(), 11, 31);
+      break;
+  }
+  
+  // Filter all session cards
+  const allCards = document.querySelectorAll('.session-card');
+  let visibleCount = 0;
+  
+  allCards.forEach(card => {
+    let show = true;
+    
+    // Scope filter (respect existing My Sessions / All Sessions toggle)
+    const cardScope = card.dataset.scope;
+    if (!showAllSessions && cardScope !== 'mine') {
+      show = false;
+    }
+    
+    // Date filter
+    const cardDate = new Date(card.dataset.date);
+    cardDate.setHours(0, 0, 0, 0);
+    if (cardDate < rangeStart || cardDate > rangeEnd) {
+      show = false;
+    }
+    
+    // Status filter
+    const cardStatus = card.dataset.status;
+    if (!filterState.status.includes(cardStatus)) {
+      show = false;
+    }
+    
+    card.style.display = show ? 'block' : 'none';
+    if (show) visibleCount++;
+  });
+  
+  // Update warning banner
+  updateWarningBanner();
+}
+
+function updateWarningBanner() {
+  const banner = document.getElementById('ShowAllWarningBanner');
+  if (banner) {
+    banner.style.display = showAllSessions ? 'block' : 'none';
+  }
+}
+
+// Hook into existing toggleSessionFilter to refresh filters
+const originalToggle = toggleSessionFilter;
+toggleSessionFilter = function() {
+  originalToggle();
+  filterSessions();
+};
+
+// Initialize on load
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initFilters);
+} else {
+  initFilters();
+}
+
+// === END MINIMAL FILTER SYSTEM ===
+
+
+</script>
+
+</body></html>

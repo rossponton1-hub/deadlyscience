@@ -1,0 +1,420 @@
+<!doctype html><html lang='en-AU'><head><meta charset='utf-8'/><meta name='viewport' content='width=device-width, initial-scale=1'/><title>Session Finder – DeadlyScience</title>
+<style>
+.skip-link{position:absolute;left:-999px;top:auto;width:1px;height:1px;overflow:hidden}
+.skip-link:focus{position:fixed;left:16px;top:16px;width:auto;height:auto;padding:12px 16px;background:var(--charcoal);color:var(--white);z-index:10000;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.25)}
+:root{--ink:#111827;--charcoal:#1f2937;--muted:#6b7280;--bg:#f5f7fa;--white:#fff;--line:#e5e7eb;--ds-red:#c62828;--ds-red-hover:#d32f2f;--green:#0a7d57;--amber:#f59e0b;--blue:#3b82f6}
+*{box-sizing:border-box}
+body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;background:var(--bg);color:var(--charcoal);line-height:1.6}
+a{color:var(--charcoal);text-decoration:none}
+.wrap{max-width:1100px;margin:0 auto;padding:16px}
+.card{background:var(--white);border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:20px}
+.session-card{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px}
+.session-card:hover{border-color:var(--ds-red);box-shadow:0 4px 12px rgba(0,0,0,.08);transition:all 0.2s}
+.badge{display:inline-block;padding:4px 10px;border-radius:6px;font-size:13px;font-weight:600;margin-right:8px}
+.badge.inperson{background:#dbeafe;color:#1e40af}
+.badge.virtual{background:#fef3c7;color:#92400e}
+.tag{display:inline-block;padding:3px 8px;border-radius:4px;font-size:12px;background:#f3f4f6;color:var(--muted);margin-right:6px;margin-top:4px}
+.btn{display:inline-block;background:var(--white);color:var(--charcoal);padding:10px 16px;border-radius:8px;border:2px solid var(--line);cursor:pointer;font-size:14px;font-weight:600;transition:all 0.2s;text-align:center}
+.btn:hover{border-color:var(--ds-red-hover);background:#fafafa;transform:translateY(-1px)}
+.btn.primary{background:var(--ds-red);color:#fff;border-color:var(--ds-red)}
+.btn.primary:hover{background:var(--ds-red-hover)}
+.btn.secondary{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn.secondary:hover{opacity:0.9}
+.muted{color:var(--muted);font-size:14px}
+header{position:sticky;top:0;z-index:50;background:linear-gradient(135deg,#8b1f1f 0%,#6d1818 100%);border-bottom:0;color:#fff;padding:24px 0;box-shadow:0 2px 4px rgba(0,0,0,0.1)}
+header strong{font-size:24px;letter-spacing:-0.5px}
+.search-box{width:100%;padding:14px;border:2px solid var(--line);border-radius:10px;font-size:15px;background:#fff}
+.search-box:focus{outline:none;border-color:var(--ds-red)}
+.session-meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:12px}
+.session-title{font-size:16px;font-weight:600;color:var(--ink);margin:0 0 8px 0}
+.session-details{font-size:14px;color:var(--muted);margin:8px 0}
+.session-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.status-indicator{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;padding:4px 10px;border-radius:6px;margin-top:4px}
+.status-indicator.complete{background:#d1fae5;color:#065f46}
+.status-indicator.incomplete{background:#fee2e2;color:#991b1b}
+.status-indicator.awaiting{background:#fef3c7;color:#92400e}
+
+/* Filter Controls */
+.filter-section{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:20px}
+.filter-group{margin-bottom:16px}
+.filter-group:last-child{margin-bottom:0}
+.filter-label{font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;display:block}
+.chip-row{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch}
+.chip-row::-webkit-scrollbar{height:6px}
+.chip-row::-webkit-scrollbar-track{background:transparent}
+.chip-row::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
+.filter-chip{display:inline-block;padding:8px 14px;border-radius:8px;font-size:14px;font-weight:500;background:var(--white);border:2px solid var(--line);color:var(--charcoal);cursor:pointer;white-space:nowrap;transition:all 0.2s;user-select:none}
+.filter-chip:hover{border-color:var(--ds-red);background:#fafafa}
+.filter-chip.active{background:var(--ds-red);color:#fff;border-color:var(--ds-red)}
+.reset-link{color:var(--ds-red);font-size:13px;font-weight:600;cursor:pointer;text-decoration:underline}
+.reset-link:hover{color:var(--ds-red-hover)}
+.empty-state{text-align:center;padding:48px 20px;color:var(--muted)}
+.empty-state h3{color:var(--charcoal);margin:0 0 8px 0}
+.empty-state p{margin:0}
+
+@media (max-width:768px){
+  .filter-section{padding:12px}
+  .filter-group{margin-bottom:12px}
+  .chip-row{margin-bottom:4px}
+}
+</style>
+</head><body>
+<a class="skip-link" href="#main-content">Skip to main content</a>
+<header>
+<div class="wrap" style="display:flex;align-items:center;justify-content:space-between;">
+<strong>DeadlyScience Session Finder</strong>
+<a href="index.html" style="color:#fff;opacity:0.9;font-size:14px;">← Back to Main Menu</a>
+</div>
+</header>
+
+<main id="main-content" tabindex="-1" class='wrap' style='padding-top:16px;' role="main">
+<h1 style="margin:0 0 8px 0;">Find Sessions</h1>
+<p class="muted" style="margin:0 0 20px 0;">Navigate to session delivery pages or check data completeness. Use filters below to find specific sessions.</p>
+
+<!-- Filter Controls -->
+<div class="filter-section">
+  <div class="filter-group">
+    <label class="filter-label">Time</label>
+    <div class="chip-row" id="time-filters" role="group" aria-label="Filter sessions by time">
+      <button type="button" class="filter-chip" data-filter="time" data-value="upcoming" aria-pressed="false">Upcoming</button>
+      <button type="button" class="filter-chip" data-filter="time" data-value="last14" aria-pressed="false">Last 14 days</button>
+      <button type="button" class="filter-chip" data-filter="time" data-value="last30" aria-pressed="false">Last 30 days</button>
+      <button type="button" class="filter-chip" data-filter="time" data-value="year" aria-pressed="false">This year</button>
+      <button type="button" class="filter-chip active" data-filter="time" data-value="all" aria-pressed="true">All time</button>
+    </div>
+  </div>
+
+  <div class="filter-group">
+    <label class="filter-label">Status</label>
+    <div class="chip-row" id="status-filters" role="group" aria-label="Filter sessions by status">
+      <button type="button" class="filter-chip active" data-filter="status" data-value="all" aria-pressed="true">All statuses</button>
+      <button type="button" class="filter-chip" data-filter="status" data-value="complete" aria-pressed="false">Complete</button>
+      <button type="button" class="filter-chip" data-filter="status" data-value="awaiting" aria-pressed="false">Awaiting</button>
+      <button type="button" class="filter-chip" data-filter="status" data-value="incomplete" aria-pressed="false">Incomplete</button>
+    </div>
+  </div>
+
+  <div class="filter-group">
+    <label class="filter-label">Mode</label>
+    <div class="chip-row" id="mode-filters" role="group" aria-label="Filter sessions by mode">
+      <button type="button" class="filter-chip active" data-filter="mode" data-value="all" aria-pressed="true">All modes</button>
+      <button type="button" class="filter-chip" data-filter="mode" data-value="inperson" aria-pressed="false">In-Person</button>
+      <button type="button" class="filter-chip" data-filter="mode" data-value="virtual" aria-pressed="false">Virtual</button>
+    </div>
+  </div>
+
+  <div class="filter-group">
+    <label class="filter-label">Search</label>
+    <input type="text" id="text-search" class="search-box" placeholder="Search by school, facilitator, or funder..." style="opacity:1;cursor:text;" />
+  </div>
+
+  <div style="margin-top:12px;text-align:right;">
+    <span class="reset-link" id="reset-filters">Reset filters</span>
+  </div>
+</div>
+
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+  <h2 style="margin:0;font-size:20px;">Sessions</h2>
+  <span class="muted" id="result-count" style="font-size:14px;" role="status" aria-live="polite"></span>
+</div>
+
+<div id="session-list">
+<!-- Scenario 1: In-person, completed, all data present -->
+<div class="session-card" data-mode="inperson" data-status="complete" data-date="2025-10-15">
+<div class="session-meta">
+<span class="badge inperson">In-Person</span>
+<span class="tag">Completed</span>
+</div>
+<h3 class="session-title">STEM Workshop – Redfern Public School</h3>
+<div class="session-details">
+📅 October 15, 2025 • 👤 Facilitator: Jordan Mills<br>
+👥 45 students • 💰 Acme Foundation, NSW Department of Education
+</div>
+<div class="status-indicator complete">
+✓ All data complete
+</div>
+<div class="session-actions">
+<a class="btn primary" href="deliver_session.html?session=SESS-501&edit=all">Open Session</a>
+</div>
+</div>
+
+<!-- Scenario 2: Virtual, awaiting teacher responses -->
+<div class="session-card" data-mode="virtual" data-status="awaiting" data-date="2025-10-22">
+<div class="session-meta">
+<span class="badge virtual">Virtual</span>
+<span class="tag">Delivered</span>
+</div>
+<h3 class="session-title">Robotics Session – Multiple Schools (Virtual)</h3>
+<div class="session-details">
+📅 October 22, 2025 • 👤 Facilitator: Sarah Chen<br>
+🏫 5 schools • 💰 Tech for Good Foundation
+</div>
+<div class="status-indicator awaiting">
+⏳ Awaiting teacher submissions (3/5 schools responded)
+</div>
+<div class="session-actions">
+<a class="btn primary" href="deliver_virtual.html?session=SESS-508&edit=all">Open Session</a>
+<a class="btn" href="data_completeness.html">View Issues</a>
+</div>
+</div>
+
+<!-- Scenario 3: In-person, missing counts -->
+<div class="session-card" data-mode="inperson" data-status="incomplete" data-date="2025-10-18">
+<div class="session-meta">
+<span class="badge inperson">In-Person</span>
+<span class="tag">Delivered</span>
+</div>
+<h3 class="session-title">Chemistry Lab – Dubbo College Senior Campus</h3>
+<div class="session-details">
+📅 October 18, 2025 • 👤 Facilitator: Marcus Thompson<br>
+🏫 Dubbo College • 💰 Regional STEM Initiative
+</div>
+<div class="status-indicator incomplete">
+⚠️ Missing student counts and demographics
+</div>
+<div class="session-actions">
+<a class="btn primary" href="deliver_session.html?session=SESS-503&edit=counts">Open Session</a>
+<a class="btn" href="data_completeness.html">View Issues</a>
+</div>
+</div>
+
+<!-- Scenario 4: Virtual, won't submit (closed incomplete) -->
+<div class="session-card" data-mode="virtual" data-status="incomplete" data-date="2025-10-05">
+<div class="session-meta">
+<span class="badge virtual">Virtual</span>
+<span class="tag">Delivered</span>
+</div>
+<h3 class="session-title">Solar Energy Workshop – Remote NT Schools</h3>
+<div class="session-details">
+📅 October 5, 2025 • 👤 Facilitator: Alex Rivera<br>
+🏫 3 schools • 💰 Clean Energy Fund
+</div>
+<div class="status-indicator incomplete">
+⚠️ 2 schools marked "Won't Submit" – demographics incomplete
+</div>
+<div class="session-actions">
+<a class="btn primary" href="deliver_virtual.html?session=SESS-495&edit=all">Open Session</a>
+<a class="btn" href="data_completeness.html">View Issues</a>
+</div>
+</div>
+
+<!-- Scenario 5: In-person, complete with funding -->
+<div class="session-card" data-mode="inperson" data-status="complete" data-date="2025-10-12">
+<div class="session-meta">
+<span class="badge inperson">In-Person</span>
+<span class="tag">Completed</span>
+</div>
+<h3 class="session-title">Deadly Labs – Kempsey Public School</h3>
+<div class="session-details">
+📅 October 12, 2025 • 👤 Facilitator: Tanya Williams<br>
+👥 32 students • 💰 DeadlyScience Core, NSW Regional Grant
+</div>
+<div class="status-indicator complete">
+✓ All data complete
+</div>
+<div class="session-actions">
+<a class="btn primary" href="deliver_session.html?session=SESS-499&edit=all">Open Session</a>
+</div>
+</div>
+
+<!-- Scenario 6: In-person, missing funding attribution -->
+<div class="session-card" data-mode="inperson" data-status="incomplete" data-date="2025-10-20">
+<div class="session-meta">
+<span class="badge inperson">In-Person</span>
+<span class="tag">Delivered</span>
+</div>
+<h3 class="session-title">Marine Biology – Brisbane State High</h3>
+<div class="session-details">
+📅 October 20, 2025 • 👤 Facilitator: David Park<br>
+👥 28 students • 💰 <em style="color:var(--amber);">Funding not attributed</em>
+</div>
+<div class="status-indicator incomplete">
+⚠️ Missing funding attribution
+</div>
+<div class="session-actions">
+<a class="btn primary" href="deliver_session.html?session=SESS-506&edit=funding">Open Session</a>
+<a class="btn" href="data_completeness.html">View Issues</a>
+</div>
+</div>
+</div>
+
+<!-- Empty State (hidden by default) -->
+<div id="empty-state" class="empty-state card" style="display:none;">
+  <h3>No sessions match your filters</h3>
+  <p>Try adjusting your filters or <span class="reset-link" onclick="resetFilters()">clear filters</span> to see all sessions.</p>
+</div>
+
+</main>
+
+<footer style="color:var(--muted);padding:24px 0;text-align:center;border-top:1px solid var(--line);margin-top:40px;" class="wrap">
+<p style="margin:0 0 8px 0;">DeadlyScience Session Finder • Functional Filtering Demo</p>
+<p style="margin:0;font-size:13px;">Client-side filtering • Real implementation uses Salesforce data</p>
+</footer>
+
+<script>
+// Current filter state
+let filters = {
+  time: 'all',
+  status: 'all',
+  mode: 'all',
+  text: ''
+};
+
+// Get today's date for time filtering
+const today = new Date();
+const thisYear = today.getFullYear();
+
+// Parse date from card text (e.g., "October 15, 2025")
+function parseCardDate(dateStr) {
+  return new Date(dateStr);
+}
+
+// Check if date falls within time range
+function matchesTimeFilter(dateStr, timeFilter) {
+  if (timeFilter === 'all') return true;
+  
+  const cardDate = parseCardDate(dateStr);
+  const daysDiff = Math.floor((today - cardDate) / (1000 * 60 * 60 * 24));
+  
+  switch(timeFilter) {
+    case 'upcoming':
+      return cardDate >= today && daysDiff <= 30;
+    case 'last14':
+      return daysDiff >= 0 && daysDiff <= 14;
+    case 'last30':
+      return daysDiff >= 0 && daysDiff <= 30;
+    case 'year':
+      return cardDate.getFullYear() === thisYear;
+    default:
+      return true;
+  }
+}
+
+// Apply all filters
+function applyFilters() {
+  const cards = document.querySelectorAll('.session-card');
+  let visibleCount = 0;
+  
+  cards.forEach(card => {
+    const mode = card.dataset.mode;
+    const status = card.dataset.status;
+    const dateStr = card.dataset.date;
+    const cardText = card.textContent.toLowerCase();
+    
+    // Check each filter
+    const modeMatch = filters.mode === 'all' || filters.mode === mode;
+    const statusMatch = filters.status === 'all' || filters.status === status;
+    const timeMatch = matchesTimeFilter(dateStr, filters.time);
+    const textMatch = filters.text === '' || cardText.includes(filters.text.toLowerCase());
+    
+    // Show card only if all filters match
+    if (modeMatch && statusMatch && timeMatch && textMatch) {
+      card.style.display = 'block';
+      visibleCount++;
+    } else {
+      card.style.display = 'none';
+    }
+  });
+  
+  // Update result count
+  const totalCount = cards.length;
+  const countEl = document.getElementById('result-count');
+  if (visibleCount === totalCount) {
+    countEl.textContent = `Showing all ${totalCount} sessions`;
+  } else {
+    countEl.textContent = `Showing ${visibleCount} of ${totalCount} sessions`;
+  }
+  
+  // Show/hide empty state
+  const emptyState = document.getElementById('empty-state');
+  const sessionList = document.getElementById('session-list');
+  if (visibleCount === 0) {
+    emptyState.style.display = 'block';
+    sessionList.style.display = 'none';
+  } else {
+    emptyState.style.display = 'none';
+    sessionList.style.display = 'block';
+  }
+}
+
+// Handle chip click
+function handleChipClick(event) {
+  const chip = event.target.closest('.filter-chip');
+  if (!chip.classList.contains('filter-chip')) return;
+
+  const filterType = chip.dataset.filter;
+  const filterValue = chip.dataset.value;
+  
+  // Update filter state
+  filters[filterType] = filterValue;
+  
+  // Update active chip in this group
+  const group = chip.parentElement;
+  group.querySelectorAll('.filter-chip').forEach(c => {
+    c.classList.remove('active');
+    c.setAttribute('aria-pressed', 'false');
+  });
+  chip.classList.add('active');
+  chip.setAttribute('aria-pressed', 'true');
+  
+  // Apply filters
+  applyFilters();
+}
+
+// Handle text search
+function handleTextSearch(event) {
+  filters.text = event.target.value;
+  applyFilters();
+}
+
+// Reset all filters
+function resetFilters() {
+  filters = {
+    time: 'all',
+    status: 'all',
+    mode: 'all',
+    text: ''
+  };
+  
+  // Reset chip active states
+  document.querySelectorAll('.filter-chip').forEach(chip => {
+    chip.classList.remove('active');
+    chip.setAttribute('aria-pressed', 'false');
+    if (chip.dataset.value === 'all') {
+      chip.classList.add('active');
+      chip.setAttribute('aria-pressed', 'true');
+    }
+  });
+  
+  // Reset text search
+  document.getElementById('text-search').value = '';
+  
+  // Apply filters (shows all)
+  applyFilters();
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+  // Add click handlers to filter chips
+  document.querySelectorAll('.chip-row').forEach(row => {
+    row.addEventListener('click', handleChipClick);
+  });
+
+  // Ensure aria-pressed matches initial state
+  document.querySelectorAll('.filter-chip').forEach(chip => {
+    chip.setAttribute('aria-pressed', chip.classList.contains('active') ? 'true' : 'false');
+  });
+  
+  // Add text search handler
+  const searchInput = document.getElementById('text-search');
+  searchInput.addEventListener('input', handleTextSearch);
+  
+  // Add reset handler
+  document.getElementById('reset-filters').addEventListener('click', resetFilters);
+  
+  // Initial count
+  applyFilters();
+});
+</script>
+
+</body></html>
