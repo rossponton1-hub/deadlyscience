@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Data Completeness – DeadlyScience v3</title>
+  <style>
+    :root {--ink:#0f172a;--charcoal:#1f2937;--muted:#6b7280;--bg:#f8fafc;--white:#ffffff;--line:#e2e8f0;--emerald:#047857;--sky:#0ea5e9;--amber:#f59e0b;--rose:#dc2626;}
+    body {margin:0;font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--charcoal);} 
+    header {background:var(--white);border-bottom:1px solid var(--line);padding:24px;} 
+    main {padding:24px;max-width:1100px;margin:0 auto;} 
+    h1 {margin:0;font-size:28px;font-weight:700;color:var(--ink);} 
+    p.lead {color:var(--muted);margin:4px 0 0 0;} 
+    .card {background:var(--white);border:1px solid var(--line);border-radius:20px;padding:24px;margin-bottom:24px;box-shadow:0 10px 28px rgba(15,23,42,0.08);} 
+    .metrics {display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;} 
+    .metric {border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:4px;} 
+    .metric strong {font-size:28px;color:var(--ink);} 
+    .metric span {color:var(--muted);font-size:13px;} 
+    table {width:100%;border-collapse:collapse;margin-top:16px;} 
+    th,td {padding:12px;border-bottom:1px solid var(--line);text-align:left;font-size:14px;} 
+    th {color:var(--muted);font-weight:600;} 
+    .status-chip {display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;border:1px solid var(--line);font-size:12px;font-weight:600;} 
+    .tone-success {background:rgba(4,120,87,0.12);border-color:rgba(4,120,87,0.3);} 
+    .tone-warn {background:rgba(245,158,11,0.15);border-color:rgba(245,158,11,0.4);} 
+    .tone-danger {background:rgba(220,38,38,0.12);border-color:rgba(220,38,38,0.3);} 
+    .tone-info {background:rgba(14,165,233,0.12);border-color:rgba(14,165,233,0.3);} 
+    .tooltip {position:relative;display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--ink);color:#fff;font-size:11px;cursor:help;} 
+    .tooltip::after {content:attr(data-tooltip);position:absolute;left:50%;transform:translate(-50%,12px);bottom:-4px;background:var(--ink);color:#fff;padding:8px 12px;border-radius:8px;font-size:12px;line-height:1.3;width:220px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:20;} 
+    .tooltip:hover::after {opacity:1;} 
+    .filter-shell {background:var(--white);border:1px solid var(--line);border-radius:20px;padding:16px;margin:16px 0;box-shadow:0 6px 18px rgba(15,23,42,0.08);} 
+    .filter-heading {display:flex;align-items:center;gap:8px;font-weight:600;margin-bottom:12px;color:var(--ink);} 
+    .chip-row {display:flex;flex-wrap:wrap;gap:8px;} 
+    .chip {display:inline-flex;align-items:center;gap:6px;background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-weight:600;font-size:13px;color:var(--charcoal);cursor:pointer;} 
+    .chip.active {background:var(--sky);color:#fff;border-color:var(--sky);} 
+    .custom-range {display:none;margin-top:12px;} 
+    .custom-range.active {display:block;} 
+    .custom-inputs {display:flex;gap:12px;flex-wrap:wrap;} 
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Data Completeness</h1>
+    <p class="lead">Monitor Demographics_Status__c and reminders across in-person and virtual sessions.</p>
+  </header>
+  <main>
+    <section id="UniversalFilters"></section>
+
+    <article class="card">
+      <h2 style="margin-top:0;">Status Overview</h2>
+      <div class="metrics" id="StatusMetrics"></div>
+    </article>
+
+    <article class="card">
+      <h2 style="margin-top:0;">Follow-up Queue</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>School</th>
+            <th>Status__c</th>
+            <th>Demographics_Status__c</th>
+            <th>Demographics_Source__c</th>
+            <th>Reminder State <span class="tooltip" data-tooltip="Reminders trigger at T+1 and T+3 calendar days unless submission or Wont_Submit is recorded.">ⓘ</span></th>
+          </tr>
+        </thead>
+        <tbody id="FollowupRows"></tbody>
+      </table>
+    </article>
+  </main>
+
+  <script src="config/universal.js"></script>
+  <script>
+    const completenessData = [
+      {school:'Dubbo Public School', status:'Delivered', demo:'Pending', source:'Presenter', reminders:'T+1 pending'},
+      {school:'Yirrkala School', status:'Delivered', demo:'Reminded', source:'Teacher_Link', reminders:'T+3 scheduled'},
+      {school:'Brewarrina Central School', status:'Delivered', demo:'Wont_Submit', source:'Presenter', reminders:'Stopped'},
+      {school:'Cherbourg State School', status:'Scheduled', demo:'Not_Applicable', source:'Teacher_Link', reminders:'Not required'}
+    ];
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const cfg = await renderUniversalDateFilter('UniversalFilters');
+      buildMetrics(cfg);
+      buildTable(cfg);
+    });
+
+    function buildMetrics(cfg) {
+      const counts = {Submitted:0, Pending:0, Wont_Submit:0, Not_Applicable:0, Reminded:0};
+      completenessData.forEach(row => {
+        if (counts[row.demo] !== undefined) counts[row.demo]++;
+        if (row.demo === 'Reminded') counts.Reminded++;
+      });
+      const container = document.getElementById('StatusMetrics');
+      container.innerHTML = '';
+      [['Submitted','tone-success','Count of Session_School__c with Demographics_Status__c = Submitted'],
+       ['Pending','tone-warn','Awaiting first submission; reminder scheduled for T+1'],
+       ['Reminded','tone-info','At least one reminder sent; will move to Submitted/Wont_Submit'],
+       ['Wont_Submit','tone-danger','Excluded from outcome denominators but counted for participation'],
+       ['Not_Applicable','tone-info','Pre-agreed exceptions such as kit-only support']
+      ].forEach(([label,tone,tip]) => {
+        const metric = document.createElement('div');
+        metric.className = 'metric';
+        const value = document.createElement('strong');
+        value.textContent = counts[label] || 0;
+        const caption = document.createElement('span');
+        caption.textContent = label;
+        const tooltip = createStatusChip(label, tip, tone.replace('tone-',''));
+        metric.appendChild(value);
+        metric.appendChild(caption);
+        metric.appendChild(tooltip);
+        container.appendChild(metric);
+      });
+    }
+
+    function buildTable(cfg) {
+      const tbody = document.getElementById('FollowupRows');
+      tbody.innerHTML = '';
+      completenessData.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${row.school}</td>
+          <td>${row.status}</td>
+          <td>${row.demo}</td>
+          <td>${row.source}</td>
+          <td>${row.reminders}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Session Finder Utility – DeadlyScience v3</title>
+  <style>
+    :root {--ink:#0f172a;--charcoal:#1f2937;--muted:#6b7280;--bg:#f8fafc;--white:#ffffff;--line:#e5e7eb;--sky:#0ea5e9;--emerald:#047857;}
+    body {margin:0;font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--charcoal);} 
+    header {background:var(--white);border-bottom:1px solid var(--line);padding:24px;} 
+    main {padding:24px;max-width:1080px;margin:0 auto;} 
+    h1 {margin:0;font-size:28px;font-weight:700;color:var(--ink);} 
+    p.lead {color:var(--muted);margin:4px 0 0 0;} 
+    .card {background:var(--white);border:1px solid var(--line);border-radius:16px;padding:24px;margin-bottom:24px;box-shadow:0 8px 24px rgba(15,23,42,0.05);} 
+    .list {display:grid;gap:16px;} 
+    .session-row {display:flex;justify-content:space-between;align-items:flex-start;gap:16px;border:1px solid var(--line);border-radius:16px;padding:16px;background:#fff;} 
+    .session-row .meta {display:flex;flex-direction:column;gap:4px;} 
+    .session-row h3 {margin:0;font-size:18px;color:var(--ink);} 
+    .session-row .badge-row {display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;} 
+    .status-chip {display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;border:1px solid var(--line);font-size:12px;font-weight:600;} 
+    .tone-success {background:rgba(5,150,105,0.12);border-color:rgba(5,150,105,0.3);} 
+    .tone-warn {background:rgba(245,158,11,0.12);border-color:rgba(245,158,11,0.3);} 
+    .tone-info {background:rgba(14,165,233,0.12);border-color:rgba(14,165,233,0.3);} 
+    .tooltip {position:relative;display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--ink);color:#fff;font-size:11px;cursor:help;} 
+    .tooltip::after {content:attr(data-tooltip);position:absolute;left:50%;transform:translate(-50%,12px);bottom:-4px;background:var(--ink);color:#fff;padding:8px 12px;border-radius:8px;font-size:12px;line-height:1.3;width:220px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:20;} 
+    .tooltip:hover::after {opacity:1;} 
+    .filter-shell {background:var(--white);border:1px solid var(--line);border-radius:16px;padding:16px;margin:16px 0;box-shadow:0 4px 12px rgba(15,23,42,0.05);} 
+    .filter-heading {display:flex;align-items:center;gap:8px;font-weight:600;margin-bottom:12px;color:var(--ink);} 
+    .chip-row {display:flex;flex-wrap:wrap;gap:8px;} 
+    .chip {display:inline-flex;align-items:center;gap:6px;background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-weight:600;font-size:13px;color:var(--charcoal);cursor:pointer;} 
+    .chip.active {background:var(--sky);color:#fff;border-color:var(--sky);} 
+    .custom-range {display:none;margin-top:12px;} 
+    .custom-range.active {display:block;} 
+    .custom-inputs {display:flex;gap:12px;flex-wrap:wrap;} 
+    .filter-grid {display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:12px;} 
+    select,input[type="text"] {padding:12px;border-radius:12px;border:1px solid var(--line);font-size:14px;width:100%;} 
+    .utility-note {border-left:4px solid var(--emerald);background:rgba(4,120,87,0.08);padding:12px 16px;border-radius:12px;margin-top:16px;color:var(--charcoal);} 
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Session Finder (Utility)</h1>
+    <p class="lead">Use shared enumerations to locate sessions. Primary entry remains the Create Session flow.</p>
+  </header>
+  <main>
+    <section id="UniversalFilters"></section>
+
+    <div class="card utility-note">
+      <strong>Reminder:</strong> Session Finder supports quick lookup. Creation and lifecycle management happen on Session Setup.
+    </div>
+
+    <div class="card">
+      <h2 style="margin-top:0;">Filters</h2>
+      <div class="filter-grid">
+        <div>
+          <label>Status__c <span class="tooltip" data-tooltip="Filters share Session__c.Status__c values.">ⓘ</span></label>
+          <select id="StatusFilter" multiple></select>
+        </div>
+        <div>
+          <label>Delivery_Type__c</label>
+          <select id="DeliveryFilter"></select>
+        </div>
+        <div>
+          <label>Program_Code__c</label>
+          <select id="ProgramFilter"></select>
+        </div>
+        <div>
+          <label>Search</label>
+          <input type="text" id="SearchFilter" placeholder="School, presenter, or Session Code" />
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-top:0;">Results</h2>
+      <div class="list" id="SessionResults"></div>
+    </div>
+  </main>
+
+  <script src="config/universal.js"></script>
+  <script>
+    const mockSessions = [
+      {name:'DeadlyLabs – Dubbo', status:'Scheduled', delivery:'In_Person', date:'2025-03-04', school:'Dubbo Public School', presenter:'J. Munro'},
+      {name:'MarineScience – Yarrabah', status:'Planned', delivery:'Virtual', date:'2025-02-19', school:'Yarrabah State School', presenter:'A. Gibson'},
+      {name:'Astronomy – Torres Strait', status:'Delivered', delivery:'In_Person', date:'2025-01-22', school:'Tagai State College', presenter:'K. Tapim'}
+    ];
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const cfg = await renderUniversalDateFilter('UniversalFilters');
+      const statusFilter = document.getElementById('StatusFilter');
+      cfg.sessionStatus.forEach(value => {
+        const opt = document.createElement('option');
+        opt.value = value;
+        opt.textContent = value;
+        statusFilter.appendChild(opt);
+      });
+      statusFilter.value = ['Scheduled'];
+
+      const deliveryFilter = document.getElementById('DeliveryFilter');
+      cfg.deliveryTypes.forEach(value => {
+        const opt = document.createElement('option');
+        opt.value = value;
+        opt.textContent = value.replace('_',' ');
+        deliveryFilter.appendChild(opt);
+      });
+
+      const programFilter = document.getElementById('ProgramFilter');
+      cfg.programCodes.forEach(value => {
+        const opt = document.createElement('option');
+        opt.value = value;
+        opt.textContent = value;
+        programFilter.appendChild(opt);
+      });
+
+      renderResults(cfg);
+    });
+
+    function renderResults(cfg) {
+      const container = document.getElementById('SessionResults');
+      container.innerHTML = '';
+      mockSessions.forEach(session => {
+        const row = document.createElement('div');
+        row.className = 'session-row';
+        const meta = document.createElement('div');
+        meta.className = 'meta';
+        const title = document.createElement('h3');
+        title.textContent = session.name;
+        const details = document.createElement('span');
+        details.style.color = 'var(--muted)';
+        details.textContent = `${session.school} • ${session.presenter}`;
+        meta.appendChild(title);
+        meta.appendChild(details);
+
+        const badgeRow = document.createElement('div');
+        badgeRow.className = 'badge-row';
+        badgeRow.appendChild(createStatusChip(session.status, 'Session__c.Status__c', session.status === 'Delivered' ? 'success' : 'info'));
+        badgeRow.appendChild(createStatusChip(session.delivery, 'Delivery_Type__c uses shared enum.', 'info'));
+        row.appendChild(meta);
+        row.appendChild(badgeRow);
+        container.appendChild(row);
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>School Lookup – DeadlyScience v3</title>
+  <style>
+    :root {--ink:#0f172a;--charcoal:#1f2937;--muted:#6b7280;--bg:#f8fafc;--white:#ffffff;--line:#e2e8f0;--emerald:#047857;--sky:#0ea5e9;--violet:#6366f1;}
+    body {margin:0;font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--charcoal);} 
+    header {background:var(--white);border-bottom:1px solid var(--line);padding:24px;} 
+    main {padding:24px;max-width:1100px;margin:0 auto;} 
+    h1 {margin:0;font-size:28px;font-weight:700;color:var(--ink);} 
+    p.lead {color:var(--muted);margin:4px 0 0 0;} 
+    .card {background:var(--white);border:1px solid var(--line);border-radius:20px;padding:24px;margin-bottom:24px;box-shadow:0 12px 32px rgba(15,23,42,0.08);} 
+    label {font-weight:600;color:var(--ink);display:flex;align-items:center;gap:6px;} 
+    input {width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);font-size:14px;} 
+    .school-grid {display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;} 
+    .school-card {border:1px solid var(--line);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:12px;} 
+    .school-card strong {font-size:18px;color:var(--ink);} 
+    .status-row {display:flex;flex-wrap:wrap;gap:8px;} 
+    .status-chip {display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;border:1px solid var(--line);font-size:12px;font-weight:600;} 
+    .tone-success {background:rgba(4,120,87,0.12);border-color:rgba(4,120,87,0.3);} 
+    .tone-info {background:rgba(14,165,233,0.12);border-color:rgba(14,165,233,0.3);} 
+    .tone-warn {background:rgba(99,102,241,0.12);border-color:rgba(99,102,241,0.3);} 
+    button.primary {background:var(--emerald);color:#fff;border:0;border-radius:12px;padding:12px 16px;font-weight:600;cursor:pointer;} 
+    button.secondary {background:var(--white);color:var(--sky);border:1px solid var(--sky);border-radius:12px;padding:12px 16px;font-weight:600;cursor:pointer;} 
+    .cta-row {display:flex;flex-wrap:wrap;gap:8px;} 
+    .tooltip {position:relative;display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--ink);color:#fff;font-size:11px;cursor:help;} 
+    .tooltip::after {content:attr(data-tooltip);position:absolute;left:50%;transform:translate(-50%,12px);bottom:-4px;background:var(--ink);color:#fff;padding:8px 12px;border-radius:8px;font-size:12px;line-height:1.3;width:220px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:20;} 
+    .tooltip:hover::after {opacity:1;} 
+    .filter-shell {background:var(--white);border:1px solid var(--line);border-radius:20px;padding:16px;margin:16px 0;box-shadow:0 6px 18px rgba(15,23,42,0.08);} 
+    .filter-heading {display:flex;align-items:center;gap:8px;font-weight:600;margin-bottom:12px;color:var(--ink);} 
+    .chip-row {display:flex;flex-wrap:wrap;gap:8px;} 
+    .chip {display:inline-flex;align-items:center;gap:6px;background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-weight:600;font-size:13px;color:var(--charcoal);cursor:pointer;} 
+    .chip.active {background:var(--sky);color:#fff;border-color:var(--sky);} 
+    .custom-range {display:none;margin-top:12px;} 
+    .custom-range.active {display:block;} 
+    .custom-inputs {display:flex;gap:12px;flex-wrap:wrap;} 
+  </style>
+</head>
+<body>
+  <header>
+    <h1>School Lookup</h1>
+    <p class="lead">Search schools, review eligibility, and jump into session flows using consistent enums.</p>
+  </header>
+  <main>
+    <section id="UniversalFilters"></section>
+
+    <article class="card">
+      <h2 style="margin-top:0;">Find a School</h2>
+      <label>Search <span class="tooltip" data-tooltip="Lookup matches school name, ACARA ID, or postcode.">ⓘ</span></label>
+      <input type="text" placeholder="Start typing a school name" />
+    </article>
+
+    <article class="card">
+      <h2 style="margin-top:0;">Results</h2>
+      <div class="school-grid" id="SchoolGrid"></div>
+    </article>
+  </main>
+
+  <script src="config/universal.js"></script>
+  <script>
+    const schoolRecords = [
+      {name:'Walgett Community College', eligibility:'Eligible', program:'DeadlyLabs', grant:'CSIRO', atsi:'50%+', dispatch:'Linked via Session DS-203'},
+      {name:'Aurukun State School', eligibility:'Conditional', program:'MarineScience', grant:'BHPFoundation', atsi:'25-50%', dispatch:'Dispatch: Not linked'},
+      {name:'Port Augusta Secondary School', eligibility:'Not Eligible', program:'Robotics', grant:'Unattributed', atsi:'10-25%', dispatch:'Linked via Session DS-189'}
+    ];
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      await renderUniversalDateFilter('UniversalFilters');
+      renderSchools();
+    });
+
+    function renderSchools() {
+      const grid = document.getElementById('SchoolGrid');
+      grid.innerHTML = '';
+      schoolRecords.forEach(record => {
+        const card = document.createElement('div');
+        card.className = 'school-card';
+        const title = document.createElement('strong');
+        title.textContent = record.name;
+        const statusRow = document.createElement('div');
+        statusRow.className = 'status-row';
+        statusRow.appendChild(createStatusChip(record.eligibility, 'Eligibility status mirrored on Eligibility Dashboard.', record.eligibility === 'Eligible' ? 'success' : 'warn'));
+        statusRow.appendChild(createStatusChip(record.program, 'Program history uses canonical codes.', 'info'));
+        statusRow.appendChild(createStatusChip(record.dispatch, 'Dispatch linkage is read-only; Shopify remains system of record.', 'info'));
+        const body = document.createElement('div');
+        body.style.color = 'var(--muted)';
+        body.style.fontSize = '13px';
+        body.textContent = `Grant: ${record.grant} • ATSI %: ${record.atsi}`;
+        const ctas = document.createElement('div');
+        ctas.className = 'cta-row';
+        const createSession = document.createElement('button');
+        createSession.className = 'primary';
+        createSession.textContent = 'Create Session';
+        createSession.addEventListener('click', () => alert('Launch Session Setup with school prefilled.'));
+        const viewSessions = document.createElement('button');
+        viewSessions.className = 'secondary';
+        viewSessions.textContent = 'View Sessions';
+        viewSessions.addEventListener('click', () => alert('Open Session Finder filtered to this school.'));
+        ctas.appendChild(createSession);
+        ctas.appendChild(viewSessions);
+        card.appendChild(title);
+        card.appendChild(statusRow);
+        card.appendChild(body);
+        card.appendChild(ctas);
+        grid.appendChild(card);
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,31 @@
+{
+  "timezone": "AEST",
+  "datePresets": [
+    {"key": "Last_7_Days", "label": "Last 7 Days", "description": "Past 7 calendar days (AEST)"},
+    {"key": "Next_90_Days", "label": "Next 90 Days", "description": "Upcoming 90 calendar days (AEST)"},
+    {"key": "This_Year", "label": "This Year", "description": "Current calendar year (AEST)"},
+    {"key": "Custom_Range", "label": "Custom Range", "description": "Select a specific start and end date"}
+  ],
+  "sessionStatus": ["Planned", "Scheduled", "Delivered", "Cancelled"],
+  "sessionSchoolStatus": ["Delivered", "No_Show", "Cancelled", "Rescheduled", "Wont_Submit"],
+  "demographicsStatus": ["Pending", "Reminded", "Submitted", "Wont_Submit", "Not_Applicable"],
+  "deliveryTypes": ["In_Person", "Virtual"],
+  "programCodes": ["DeadlyLabs", "MarineScience", "Robotics", "Astronomy", "Other"],
+  "grantCodes": ["CSIRO", "GoogleOrg", "BHPFoundation", "Unattributed"],
+  "impactDomains": [
+    {"key": "Cultural_Connection", "label": "Cultural Connection"},
+    {"key": "Ignite_STEM_Interest", "label": "Ignite STEM Interest"},
+    {"key": "Explore_STEM_Careers", "label": "Explore STEM Careers"},
+    {"key": "Empower_Educators", "label": "Empower Educators"},
+    {"key": "Diverse_STEM_Resources", "label": "Diverse STEM Resources"},
+    {"key": "Engage_Communities", "label": "Engage Communities"}
+  ],
+  "atsipctThresholds": [
+    {"key": "0_10", "label": "0-10%"},
+    {"key": "10_25", "label": "10-25%"},
+    {"key": "25_50", "label": "25-50%"},
+    {"key": "50_plus", "label": "50%+"}
+  ],
+  "yearLevels": ["K", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"],
+  "reminderSchedule": ["T+1 Day", "T+3 Days"]
+}

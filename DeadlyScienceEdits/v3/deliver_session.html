@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Deliver Session (In-Person) – DeadlyScience v3</title>
+  <style>
+    :root {--ink:#0f172a;--charcoal:#1f2937;--muted:#6b7280;--bg:#f1f5f9;--white:#ffffff;--line:#e2e8f0;--emerald:#047857;--sky:#0ea5e9;--rose:#dc2626;--amber:#f97316;}
+    body {margin:0;font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--charcoal);} 
+    header {background:var(--white);border-bottom:1px solid var(--line);padding:24px;} 
+    main {padding:24px;max-width:960px;margin:0 auto;} 
+    h1 {margin:0;font-size:28px;font-weight:700;color:var(--ink);} 
+    p.lead {color:var(--muted);margin:4px 0 0 0;} 
+    .card {background:var(--white);border:1px solid var(--line);border-radius:20px;padding:24px;margin-bottom:24px;box-shadow:0 12px 32px rgba(15,23,42,0.08);} 
+    .school-list {display:grid;gap:16px;} 
+    .school-card {border:1px solid var(--line);border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:12px;} 
+    .school-header {display:flex;justify-content:space-between;align-items:center;gap:12px;} 
+    .school-name {font-size:18px;font-weight:700;color:var(--ink);} 
+    .status-row {display:flex;flex-wrap:wrap;gap:8px;} 
+    .status-chip {display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;border:1px solid var(--line);font-size:12px;font-weight:600;} 
+    .tone-success {background:rgba(4,120,87,0.12);border-color:rgba(4,120,87,0.3);} 
+    .tone-warn {background:rgba(249,115,22,0.12);border-color:rgba(249,115,22,0.3);} 
+    .tone-danger {background:rgba(220,38,38,0.12);border-color:rgba(220,38,38,0.3);} 
+    .tone-info {background:rgba(14,165,233,0.12);border-color:rgba(14,165,233,0.3);} 
+    button.primary {background:var(--emerald);color:#fff;border:0;border-radius:12px;padding:12px 16px;font-weight:600;cursor:pointer;} 
+    button.secondary {background:var(--white);color:var(--charcoal);border:1px solid var(--line);border-radius:12px;padding:12px 16px;font-weight:600;cursor:pointer;} 
+    button.danger {background:var(--rose);color:#fff;border:0;border-radius:12px;padding:12px 16px;font-weight:600;cursor:pointer;} 
+    button.link {background:none;border:0;color:var(--sky);font-weight:600;cursor:pointer;} 
+    .tooltip {position:relative;display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--ink);color:#fff;font-size:11px;cursor:help;} 
+    .tooltip::after {content:attr(data-tooltip);position:absolute;left:50%;transform:translate(-50%,12px);bottom:-4px;background:var(--ink);color:#fff;padding:8px 12px;border-radius:8px;font-size:12px;line-height:1.3;width:220px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:20;} 
+    .tooltip:hover::after {opacity:1;} 
+    .filter-shell {background:var(--white);border:1px solid var(--line);border-radius:20px;padding:16px;margin:16px 0;box-shadow:0 6px 18px rgba(15,23,42,0.08);} 
+    .filter-heading {display:flex;align-items:center;gap:8px;font-weight:600;margin-bottom:12px;color:var(--ink);} 
+    .chip-row {display:flex;flex-wrap:wrap;gap:8px;} 
+    .chip {display:inline-flex;align-items:center;gap:6px;background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-weight:600;font-size:13px;color:var(--charcoal);cursor:pointer;} 
+    .chip.active {background:var(--sky);color:#fff;border-color:var(--sky);} 
+    .custom-range {display:none;margin-top:12px;} 
+    .custom-range.active {display:block;} 
+    .custom-inputs {display:flex;gap:12px;flex-wrap:wrap;} 
+    .demographic-grid {display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;} 
+    input[type="number"] {padding:12px;border-radius:12px;border:1px solid var(--line);font-size:14px;width:100%;} 
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Deliver Session – In-Person</h1>
+    <p class="lead">Presenter workflow for capturing attendance and demographics with Salesforce-aligned fields.</p>
+  </header>
+  <main>
+    <section id="UniversalFilters"></section>
+
+    <article class="card">
+      <h2 style="margin-top:0;">Presenter Checklist</h2>
+      <p class="lead">Demographics_Source__c defaults to Presenter. Reminders send at T+1 and T+3 days if Pending.</p>
+      <div class="status-row" id="LifecycleChips"></div>
+    </article>
+
+    <article class="card">
+      <h2 style="margin-top:0;">Today’s Schools</h2>
+      <div class="school-list" id="SchoolList"></div>
+    </article>
+  </main>
+
+  <script src="config/universal.js"></script>
+  <script>
+    const presenterSchools = [
+      {name:'Dubbo Public School', status:'Scheduled', demographics:'Pending', total:48, atsi:22, yearLevels:'5;6', remindersSent:false},
+      {name:'Brewarrina Central School', status:'Delivered', demographics:'Reminded', total:36, atsi:28, yearLevels:'7;8', remindersSent:true},
+      {name:'Nyngan High School', status:'Delivered', demographics:'Submitted', total:62, atsi:31, yearLevels:'9;10', remindersSent:true}
+    ];
+
+    let currentConfig;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      currentConfig = await renderUniversalDateFilter('UniversalFilters', {defaultPreset:'Last_7_Days'});
+      const lifecycle = document.getElementById('LifecycleChips');
+      currentConfig.sessionSchoolStatus.forEach(value => {
+        const chip = createStatusChip(value, 'Session_School__c.Status__c shared across modes.', value === 'Delivered' ? 'success' : value === 'Cancelled' ? 'danger' : 'warn');
+        lifecycle.appendChild(chip);
+      });
+      lifecycle.appendChild(createStatusChip('Demographics_Source__c = Presenter', 'Default capture responsibility for in-person delivery.', 'info'));
+
+      renderSchools();
+    });
+
+    function renderSchools() {
+      const cfg = currentConfig;
+      const container = document.getElementById('SchoolList');
+      container.innerHTML = '';
+      presenterSchools.forEach((school, index) => {
+        const card = document.createElement('div');
+        card.className = 'school-card';
+
+        const header = document.createElement('div');
+        header.className = 'school-header';
+        const title = document.createElement('div');
+        title.className = 'school-name';
+        title.textContent = school.name;
+        const statusRow = document.createElement('div');
+        statusRow.className = 'status-row';
+        statusRow.appendChild(createStatusChip(school.status, 'Session__c.Status__c viewed for presenter context.', school.status === 'Delivered' ? 'success' : 'info'));
+        statusRow.appendChild(createStatusChip(`Demographics: ${school.demographics}`, 'Demographics_Status__c transitions to Reminded after first reminder.', school.demographics === 'Submitted' ? 'success' : school.demographics === 'Wont_Submit' ? 'danger' : 'warn'));
+        header.appendChild(title);
+        header.appendChild(statusRow);
+
+        const demoGrid = document.createElement('div');
+        demoGrid.className = 'demographic-grid';
+        demoGrid.innerHTML = `
+          <label>Total_Students__c<input type="number" value="${school.total}" /></label>
+          <label>ATSI_Students__c<input type="number" value="${school.atsi}" /></label>
+          <label>Year_Levels__c<input type="text" value="${school.yearLevels}" /></label>
+        `;
+
+        const actions = document.createElement('div');
+        actions.style.display = 'flex';
+        actions.style.flexWrap = 'wrap';
+        actions.style.gap = '8px';
+        const submit = document.createElement('button');
+        submit.className = 'primary';
+        submit.textContent = 'Submit demographics';
+        submit.addEventListener('click', () => updateDemographicsStatus(index, 'Submitted'));
+        const wont = document.createElement('button');
+        wont.className = 'secondary';
+        wont.textContent = 'Mark Wont_Submit';
+        wont.addEventListener('click', () => updateDemographicsStatus(index, 'Wont_Submit'));
+
+        actions.appendChild(submit);
+        actions.appendChild(wont);
+
+        const reminderInfo = document.createElement('div');
+        reminderInfo.style.color = 'var(--muted)';
+        reminderInfo.style.fontSize = '13px';
+        reminderInfo.textContent = school.remindersSent ? 'Reminder schedule: T+1 sent, T+3 scheduled.' : 'Reminder schedule: T+1 pending, T+3 pending.';
+
+        card.appendChild(header);
+        card.appendChild(demoGrid);
+        card.appendChild(actions);
+        card.appendChild(reminderInfo);
+        container.appendChild(card);
+      });
+    }
+
+    function updateDemographicsStatus(index, status) {
+      presenterSchools[index].demographics = status;
+      if (status === 'Submitted' || status === 'Wont_Submit') {
+        presenterSchools[index].remindersSent = true;
+      }
+      renderSchools();
+    }
+  </script>
+</body>
+</html>
