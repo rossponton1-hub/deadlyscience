@@ -1,0 +1,1899 @@
+<!doctype html>
+<html lang='en-AU'>
+<head>
+<meta charset='utf-8'/>
+<meta name='viewport' content='width=device-width,initial-scale=1'/>
+<title>Eligibility & Targeting Dashboard V4 - Final</title>
+
+<!-- Tippy.js for tooltips -->
+<script src="https://unpkg.com/@popperjs/core@2.11.8/dist/umd/popper.min.js" defer></script>
+<script src="https://unpkg.com/tippy.js@6.3.7/dist/tippy-bundle.umd.min.js" defer></script>
+<link rel="stylesheet" href="https://unpkg.com/tippy.js@6.3.7/dist/tippy.css" />
+
+<!-- Leaflet for maps -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- Leaflet MarkerCluster -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+<style>
+:root{
+  --ink:#111827;
+  --charcoal:#1f2937;
+  --muted:#6b7280;
+  --bg:#f3f4f6;
+  --white:#fff;
+  --line:#e5e7eb;
+  --green:#0a7d57;
+  --red:#c62828;
+  --amber:#f59e0b;
+  --blue:#3b82f6;
+}
+
+* { box-sizing:border-box; }
+
+body {
+  margin:0;
+  font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+  background:var(--bg);
+  color:var(--charcoal);
+}
+
+a { color:var(--charcoal); text-decoration:none; }
+
+.wrap { max-width:1400px; margin:0 auto; padding:12px; }
+
+.card {
+  background:var(--white);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:16px;
+  box-shadow:0 2px 8px rgba(0,0,0,.06);
+  margin-bottom:16px;
+}
+
+.btn {
+  background:var(--charcoal);
+  color:#fff;
+  padding:8px 14px;
+  border-radius:8px;
+  border:0;
+  cursor:pointer;
+  font-size:13px;
+  font-weight:600;
+  transition:all 0.2s;
+  display:inline-block;
+}
+
+.btn:hover { opacity:0.9; }
+.btn:focus { outline:2px solid var(--blue); outline-offset:2px; }
+.btn.primary { background:var(--green); }
+.btn.secondary { background:#3b82f6; }
+.btn.ghost { background:transparent; color:var(--charcoal); border:1px solid var(--line); }
+.btn.small { padding:6px 12px; font-size:12px; }
+
+.btn-group {
+  display:inline-flex;
+  gap:4px;
+}
+
+.btn-group .btn {
+  border-radius:0;
+  border-right:1px solid rgba(255,255,255,0.2);
+}
+
+.btn-group .btn:first-child { border-radius:8px 0 0 8px; }
+.btn-group .btn:last-child { border-radius:0 8px 8px 0; border-right:none; }
+.btn-group .btn.active { background:var(--blue); }
+
+/* View toggle tabs */
+.view-tabs {
+  display:flex;
+  gap:0;
+  border:1px solid var(--line);
+  border-radius:8px;
+  overflow:hidden;
+  display:inline-flex;
+}
+
+.view-tab {
+  background:transparent;
+  color:var(--charcoal);
+  padding:10px 20px;
+  border:none;
+  border-right:1px solid var(--line);
+  cursor:pointer;
+  font-size:14px;
+  font-weight:600;
+  transition:all 0.2s;
+}
+
+.view-tab:last-child { border-right:none; }
+
+.view-tab:hover {
+  background:var(--bg);
+}
+
+.view-tab.active {
+  background:var(--blue);
+  color:#fff;
+}
+
+select, input[type="text"], input[type="number"] {
+  padding:8px;
+  border:1px solid var(--line);
+  border-radius:6px;
+  font-size:14px;
+  background:#fff;
+}
+
+select:focus, input:focus {
+  outline:2px solid var(--blue);
+  outline-offset:0;
+  border-color:var(--blue);
+}
+
+/* Search box */
+.search-box {
+  position:relative;
+}
+
+.search-box input {
+  width:100%;
+  padding:12px 40px 12px 40px;
+  font-size:15px;
+  border:2px solid var(--line);
+  border-radius:8px;
+}
+
+.search-box input:focus {
+  border-color:var(--blue);
+}
+
+.search-icon {
+  position:absolute;
+  left:12px;
+  top:50%;
+  transform:translateY(-50%);
+  font-size:18px;
+  color:var(--muted);
+}
+
+.search-clear {
+  position:absolute;
+  right:12px;
+  top:50%;
+  transform:translateY(-50%);
+  background:none;
+  border:none;
+  font-size:20px;
+  color:var(--muted);
+  cursor:pointer;
+  padding:4px;
+  display:none;
+}
+
+.search-clear:hover {
+  color:var(--charcoal);
+}
+
+.search-box.has-value .search-clear {
+  display:block;
+}
+
+/* Multi-select */
+.multiselect {
+  position:relative;
+  display:inline-block;
+  min-width:200px;
+}
+
+.multiselect-header {
+  padding:8px 32px 8px 8px;
+  border:1px solid var(--line);
+  border-radius:6px;
+  background:#fff;
+  cursor:pointer;
+  font-size:14px;
+  position:relative;
+  user-select:none;
+}
+
+.multiselect-header:hover {
+  border-color:var(--blue);
+}
+
+.multiselect-header::after {
+  content:'▼';
+  position:absolute;
+  right:10px;
+  top:50%;
+  transform:translateY(-50%);
+  font-size:10px;
+  color:var(--muted);
+}
+
+.multiselect-dropdown {
+  display:none;
+  position:absolute;
+  top:100%;
+  left:0;
+  right:0;
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:6px;
+  box-shadow:0 4px 12px rgba(0,0,0,0.15);
+  margin-top:4px;
+  max-height:300px;
+  overflow-y:auto;
+  z-index:1000;
+}
+
+.multiselect.open .multiselect-dropdown {
+  display:block;
+}
+
+.multiselect-option {
+  padding:10px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:14px;
+}
+
+.multiselect-option:hover {
+  background:var(--bg);
+}
+
+.multiselect-option input[type="checkbox"] {
+  margin:0;
+  width:16px;
+  height:16px;
+  cursor:pointer;
+}
+
+/* Filter chips */
+.filter-chips {
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:12px;
+  min-height:32px;
+}
+
+.chip {
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:6px 10px;
+  background:#e0f2fe;
+  border:1px solid #7dd3fc;
+  color:#0369a1;
+  border-radius:999px;
+  font-size:13px;
+  font-weight:500;
+}
+
+.chip.grant-preset {
+  background:#dcfce7;
+  border-color:#86efac;
+  color:#166534;
+}
+
+.chip.search-chip {
+  background:#fef3c7;
+  border-color:#fde68a;
+  color:#92400e;
+}
+
+.chip-remove {
+  background:none;
+  border:none;
+  color:inherit;
+  cursor:pointer;
+  padding:0;
+  font-size:16px;
+  line-height:1;
+  opacity:0.7;
+  transition:opacity 0.2s;
+}
+
+.chip-remove:hover {
+  opacity:1;
+}
+
+/* Slider */
+.slider-container {
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+input[type="range"] {
+  flex:1;
+  height:6px;
+  border-radius:3px;
+  background:#e5e7eb;
+  outline:none;
+  -webkit-appearance:none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance:none;
+  appearance:none;
+  width:18px;
+  height:18px;
+  border-radius:50%;
+  background:var(--blue);
+  cursor:pointer;
+  border:2px solid #fff;
+  box-shadow:0 2px 4px rgba(0,0,0,0.2);
+}
+
+input[type="range"]::-moz-range-thumb {
+  width:18px;
+  height:18px;
+  border-radius:50%;
+  background:var(--blue);
+  cursor:pointer;
+  border:2px solid #fff;
+  box-shadow:0 2px 4px rgba(0,0,0,0.2);
+}
+
+input[type="range"]:focus::-webkit-slider-thumb {
+  box-shadow:0 0 0 3px rgba(59,130,246,0.3);
+}
+
+.slider-value {
+  min-width:60px;
+}
+
+.slider-value input {
+  width:60px;
+  text-align:center;
+}
+
+/* Engagement window radio buttons */
+.engagement-options {
+  display:flex;
+  gap:16px;
+  flex-wrap:wrap;
+  margin-top:8px;
+}
+
+.engagement-option {
+  display:flex;
+  align-items:center;
+  gap:6px;
+  cursor:pointer;
+  user-select:none;
+}
+
+.engagement-option input[type="radio"] {
+  margin:0;
+  cursor:pointer;
+}
+
+.engagement-option:hover {
+  opacity:0.8;
+}
+
+.muted { color:var(--muted); font-size:13px; }
+
+header {
+  position:sticky;
+  top:0;
+  z-index:100;
+  background:#fff;
+  border-bottom:1px solid #e5e7eb;
+  padding:12px 0;
+  box-shadow:0 2px 4px rgba(0,0,0,0.05);
+}
+
+table {
+  width:100%;
+  border-collapse:collapse;
+  margin-top:12px;
+}
+
+th {
+  background:#f9fafb;
+  padding:8px 10px;
+  text-align:left;
+  font-size:12px;
+  font-weight:600;
+  border-bottom:2px solid #e5e7eb;
+  cursor:pointer;
+  user-select:none;
+  position:relative;
+}
+
+th:hover {
+  background:#f3f4f6;
+}
+
+th.sortable::after {
+  content:'↕';
+  position:absolute;
+  right:6px;
+  opacity:0.3;
+  font-size:10px;
+}
+
+th.sorted-asc::after {
+  content:'↑';
+  opacity:1;
+  color:var(--blue);
+}
+
+th.sorted-desc::after {
+  content:'↓';
+  opacity:1;
+  color:var(--blue);
+}
+
+td {
+  padding:6px 10px;
+  border-bottom:1px solid #f3f4f6;
+  font-size:13px;
+}
+
+tr:hover {
+  background:#f9fafb;
+}
+
+.badge {
+  display:inline-block;
+  padding:4px 10px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:600;
+  cursor:help;
+}
+
+.badge.eligible { background:#d1fae5; color:#065f46; }
+.badge.conditional { background:#fef3c7; color:#92400e; }
+.badge.not-eligible { background:#fee2e2; color:#991b1b; }
+
+.copy-btn {
+  background:none;
+  border:1px solid var(--line);
+  padding:4px 8px;
+  border-radius:6px;
+  cursor:pointer;
+  font-size:12px;
+  color:var(--muted);
+  transition:all 0.2s;
+}
+
+.copy-btn:hover {
+  background:var(--bg);
+  color:var(--charcoal);
+  border-color:var(--charcoal);
+}
+
+/* Map container */
+#mapContainer {
+  display:none;
+}
+
+#mapContainer.active {
+  display:block;
+}
+
+#map {
+  height:600px;
+  border-radius:12px;
+  overflow:hidden;
+  position:relative;
+}
+
+#tableContainer.active {
+  display:block;
+}
+
+#tableContainer:not(.active) {
+  display:none;
+}
+
+/* Map legend */
+.map-legend {
+  position:absolute;
+  bottom:20px;
+  right:20px;
+  background:white;
+  padding:16px;
+  border-radius:8px;
+  box-shadow:0 4px 12px rgba(0,0,0,0.15);
+  z-index:1000;
+  font-size:13px;
+}
+
+.map-legend-item {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-bottom:8px;
+}
+
+.map-legend-item:last-child {
+  margin-bottom:0;
+}
+
+.map-marker-preview {
+  width:12px;
+  height:12px;
+  border-radius:50%;
+  border:2px solid #fff;
+  box-shadow:0 2px 4px rgba(0,0,0,0.3);
+}
+
+.map-marker-preview.red { background:#ef4444; }
+.map-marker-preview.green { background:#10b981; }
+
+/* Glossary drawer */
+.drawer {
+  position:fixed;
+  right:-400px;
+  top:0;
+  bottom:0;
+  width:400px;
+  background:#fff;
+  box-shadow:-4px 0 12px rgba(0,0,0,0.1);
+  transition:right 0.3s;
+  z-index:1000;
+  overflow-y:auto;
+}
+
+.drawer.open {
+  right:0;
+}
+
+.drawer-overlay {
+  display:none;
+  position:fixed;
+  top:0;
+  left:0;
+  right:0;
+  bottom:0;
+  background:rgba(0,0,0,0.5);
+  z-index:999;
+}
+
+.drawer-overlay.active {
+  display:block;
+}
+
+.drawer-header {
+  padding:20px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.drawer-content {
+  padding:20px;
+}
+
+.drawer-close {
+  background:none;
+  border:none;
+  font-size:24px;
+  cursor:pointer;
+  color:var(--muted);
+}
+
+.drawer-close:hover {
+  color:var(--charcoal);
+}
+
+.glossary-term {
+  margin-bottom:20px;
+  padding-bottom:20px;
+  border-bottom:1px solid var(--line);
+}
+
+.glossary-term:last-child {
+  border-bottom:none;
+}
+
+.glossary-term h4 {
+  margin:0 0 8px 0;
+  color:var(--charcoal);
+}
+
+.glossary-term p {
+  margin:0;
+  color:var(--muted);
+  line-height:1.6;
+}
+
+/* Custom Leaflet marker icons */
+.leaflet-marker-icon.red-marker {
+  background-color:#ef4444;
+  border:2px solid #fff;
+  border-radius:50%;
+  width:16px !important;
+  height:16px !important;
+  margin-left:-8px !important;
+  margin-top:-8px !important;
+  box-shadow:0 2px 4px rgba(0,0,0,0.3);
+}
+
+.leaflet-marker-icon.green-marker {
+  background-color:#10b981;
+  border:2px solid #fff;
+  border-radius:50%;
+  width:16px !important;
+  height:16px !important;
+  margin-left:-8px !important;
+  margin-top:-8px !important;
+  box-shadow:0 2px 4px rgba(0,0,0,0.3);
+}
+</style>
+</head>
+<body>
+
+<header>
+<div class="wrap" style="display:flex;align-items:center;justify-content:space-between;">
+<div>
+<strong style="font-size:16px;">🎯 Eligibility & Targeting Dashboard</strong>
+<span class="muted" style="margin-left:12px;">V4 - Search + Map + Engagement Window</span>
+</div>
+<div style="display:flex;gap:8px;">
+<button class="btn ghost small" onclick="openGlossary()">📖 Glossary</button>
+<button class="btn secondary small" onclick="exportToCSV()">📥 Export CSV</button>
+<a class="btn ghost small" href="index.html">Index</a>
+</div>
+</div>
+</header>
+
+<main class='wrap' style='padding-top:16px;'>
+
+<!-- SCHOOL SEARCH -->
+<div class="card">
+<label style="display:block;font-weight:600;margin-bottom:8px;font-size:14px;">
+🔍 School Search
+</label>
+<div class="search-box" id="searchBox">
+<span class="search-icon">🔍</span>
+<input 
+  type="text" 
+  id="schoolSearch" 
+  placeholder="Search by school name or ACARA code..." 
+  oninput="handleSearch()"
+  autocomplete="off"
+/>
+<button class="search-clear" onclick="clearSearch()" aria-label="Clear search">×</button>
+</div>
+<div class="muted" style="margin-top:6px;">
+Search combines with filters below. Results show schools matching search AND active filters.
+</div>
+</div>
+
+<!-- FILTERS CARD -->
+<div class="card">
+<h3 style="margin:0 0 16px 0;">Filters</h3>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;">
+
+<!-- Grant Preset -->
+<div>
+<label style="display:block;font-weight:600;margin-bottom:6px;font-size:14px;">
+Grant Criteria Preset
+</label>
+<select id="grantPreset" onchange="applyGrantPreset()" style="width:100%;">
+<option value="">None (Manual filters)</option>
+<option value="GM3">GM3 Foundation</option>
+<option value="CSU">CSU Grant</option>
+<option value="Airtrunk">Airtrunk</option>
+</select>
+</div>
+
+<!-- Eligibility Status -->
+<div>
+<label style="display:block;font-weight:600;margin-bottom:6px;font-size:14px;">
+Eligibility Status
+</label>
+<select id="eligibilityFilter" onchange="applyFilters()" style="width:100%;">
+<option value="">All</option>
+<option value="eligible">Eligible</option>
+<option value="conditional">Conditional</option>
+<option value="not-eligible">Not Eligible</option>
+</select>
+</div>
+
+<!-- Program History -->
+<div>
+<label style="display:block;font-weight:600;margin-bottom:6px;font-size:14px;">
+Program History
+</label>
+<select id="programFilter" onchange="applyFilters()" style="width:100%;">
+<option value="">All Programs</option>
+<option value="DeadlyLabs">DeadlyLabs</option>
+<option value="Marine Science">Marine Science</option>
+<option value="Robotics">Robotics</option>
+<option value="Chemistry">Chemistry</option>
+<option value="Renewable Energy">Renewable Energy</option>
+</select>
+</div>
+
+<!-- State (Multi-Select) -->
+<div>
+<label style="display:block;font-weight:600;margin-bottom:6px;font-size:14px;">
+State
+</label>
+<div class="multiselect" id="stateMultiselect">
+<div class="multiselect-header" onclick="toggleMultiselect('stateMultiselect')">
+<span id="stateLabel">All States</span>
+</div>
+<div class="multiselect-dropdown">
+<div class="multiselect-option">
+<input type="checkbox" id="state-NSW" value="NSW" onchange="updateMultiselect('state')">
+<label for="state-NSW">NSW</label>
+</div>
+<div class="multiselect-option">
+<input type="checkbox" id="state-VIC" value="VIC" onchange="updateMultiselect('state')">
+<label for="state-VIC">VIC</label>
+</div>
+<div class="multiselect-option">
+<input type="checkbox" id="state-QLD" value="QLD" onchange="updateMultiselect('state')">
+<label for="state-QLD">QLD</label>
+</div>
+<div class="multiselect-option">
+<input type="checkbox" id="state-SA" value="SA" onchange="updateMultiselect('state')">
+<label for="state-SA">SA</label>
+</div>
+<div class="multiselect-option">
+<input type="checkbox" id="state-WA" value="WA" onchange="updateMultiselect('state')">
+<label for="state-WA">WA</label>
+</div>
+<div class="multiselect-option">
+<input type="checkbox" id="state-TAS" value="TAS" onchange="updateMultiselect('state')">
+<label for="state-TAS">TAS</label>
+</div>
+<div class="multiselect-option">
+<input type="checkbox" id="state-NT" value="NT" onchange="updateMultiselect('state')">
+<label for="state-NT">NT</label>
+</div>
+<div class="multiselect-option">
+<input type="checkbox" id="state-ACT" value="ACT" onchange="updateMultiselect('state')">
+<label for="state-ACT">ACT</label>
+</div>
+</div>
+</div>
+</div>
+
+<!-- ARIA (Multi-Select) -->
+<div>
+<label style="display:block;font-weight:600;margin-bottom:6px;font-size:14px;">
+ARIA (Remoteness)
+</label>
+<div class="multiselect" id="ariaMultiselect">
+<div class="multiselect-header" onclick="toggleMultiselect('ariaMultiselect')">
+<span id="ariaLabel">All ARIA</span>
+</div>
+<div class="multiselect-dropdown">
+<div class="multiselect-option">
+<input type="checkbox" id="aria-Major Cities" value="Major Cities" onchange="updateMultiselect('aria')">
+<label for="aria-Major Cities">Major Cities</label>
+</div>
+<div class="multiselect-option">
+<input type="checkbox" id="aria-Inner Regional" value="Inner Regional" onchange="updateMultiselect('aria')">
+<label for="aria-Inner Regional">Inner Regional</label>
+</div>
+<div class="multiselect-option">
+<input type="checkbox" id="aria-Outer Regional" value="Outer Regional" onchange="updateMultiselect('aria')">
+<label for="aria-Outer Regional">Outer Regional</label>
+</div>
+<div class="multiselect-option">
+<input type="checkbox" id="aria-Remote" value="Remote" onchange="updateMultiselect('aria')">
+<label for="aria-Remote">Remote</label>
+</div>
+<div class="multiselect-option">
+<input type="checkbox" id="aria-Very Remote" value="Very Remote" onchange="updateMultiselect('aria')">
+<label for="aria-Very Remote">Very Remote</label>
+</div>
+</div>
+</div>
+</div>
+
+<!-- Sector (Multi-Select) -->
+<div>
+<label style="display:block;font-weight:600;margin-bottom:6px;font-size:14px;">
+Sector
+</label>
+<div class="multiselect" id="sectorMultiselect">
+<div class="multiselect-header" onclick="toggleMultiselect('sectorMultiselect')">
+<span id="sectorLabel">All Sectors</span>
+</div>
+<div class="multiselect-dropdown">
+<div class="multiselect-option">
+<input type="checkbox" id="sector-Government" value="Government" onchange="updateMultiselect('sector')">
+<label for="sector-Government">Government</label>
+</div>
+<div class="multiselect-option">
+<input type="checkbox" id="sector-Catholic" value="Catholic" onchange="updateMultiselect('sector')">
+<label for="sector-Catholic">Catholic</label>
+</div>
+<div class="multiselect-option">
+<input type="checkbox" id="sector-Independent" value="Independent" onchange="updateMultiselect('sector')">
+<label for="sector-Independent">Independent</label>
+</div>
+</div>
+</div>
+</div>
+
+</div>
+
+<!-- ICSEA PRESETS -->
+<div style="margin-top:20px;">
+<label style="display:block;font-weight:600;margin-bottom:8px;font-size:14px;">
+ICSEA Range
+</label>
+<div class="btn-group">
+<button class="btn small" id="icsea-preset-1" onclick="setICSEAPreset(0, 970)">≤970</button>
+<button class="btn small" id="icsea-preset-2" onclick="setICSEAPreset(971, 1000)">971-1000</button>
+<button class="btn small" id="icsea-preset-3" onclick="setICSEAPreset(1001, 1300)">1000+</button>
+<button class="btn small" id="icsea-preset-custom" onclick="showCustomICSEA()">Custom...</button>
+</div>
+<div id="customICSEA" style="display:none;margin-top:12px;">
+<div style="display:flex;gap:12px;align-items:center;">
+<div>
+<label style="font-size:13px;margin-bottom:4px;display:block;">Min</label>
+<input type="number" id="icseaMin" min="0" max="1300" value="0" style="width:100px;" oninput="applyFilters()">
+</div>
+<div>
+<label style="font-size:13px;margin-bottom:4px;display:block;">Max</label>
+<input type="number" id="icseaMax" min="0" max="1300" value="1300" style="width:100px;" oninput="applyFilters()">
+</div>
+</div>
+</div>
+<div class="muted" style="margin-top:6px;">
+Index of Community Socio-Educational Advantage (avg ~1000)
+</div>
+</div>
+
+<!-- ATSI SLIDER + INPUT -->
+<div style="margin-top:20px;">
+<label style="display:block;font-weight:600;margin-bottom:8px;font-size:14px;">
+Min ATSI %
+</label>
+<div class="slider-container">
+<span class="muted" style="font-size:12px;">0%</span>
+<input type="range" id="atsiSlider" min="0" max="100" value="17" oninput="syncATSI('slider')">
+<span class="muted" style="font-size:12px;">100%</span>
+<div class="slider-value">
+<input type="number" id="atsiInput" min="0" max="100" value="17" oninput="syncATSI('input')" style="width:60px;">
+<span style="font-size:12px;">%</span>
+</div>
+</div>
+<div class="muted" style="margin-top:6px;">
+Aboriginal & Torres Strait Islander student percentage (default: 17%)
+</div>
+</div>
+
+<!-- FILTER CHIPS -->
+<div id="filterChipsContainer" class="filter-chips" style="margin-top:20px;">
+<!-- Chips populated by JavaScript -->
+</div>
+
+</div>
+
+<!-- VIEW TOGGLE -->
+<div class="card">
+<div style="display:flex;justify-content:space-between;align-items:center;">
+<div class="view-tabs">
+<button class="view-tab active" id="tableViewTab" onclick="switchView('table')">
+📊 Table View
+</button>
+<button class="view-tab" id="mapViewTab" onclick="switchView('map')">
+🗺️ Map View
+</button>
+</div>
+<div id="resultCounter" class="muted" style="font-size:13px;"></div>
+</div>
+</div>
+
+<!-- MAP VIEW -->
+<div id="mapContainer">
+<div class="card" style="margin-bottom:12px;">
+<label style="display:block;font-weight:600;margin-bottom:8px;font-size:14px;">
+Show engagement as:
+</label>
+<div class="engagement-options">
+<label class="engagement-option">
+<input type="radio" name="engagementWindow" value="3" onchange="updateMapColors()">
+<span>3 months</span>
+</label>
+<label class="engagement-option">
+<input type="radio" name="engagementWindow" value="6" onchange="updateMapColors()">
+<span>6 months</span>
+</label>
+<label class="engagement-option">
+<input type="radio" name="engagementWindow" value="12" checked onchange="updateMapColors()">
+<span>12 months</span>
+</label>
+<label class="engagement-option">
+<input type="radio" name="engagementWindow" value="18" onchange="updateMapColors()">
+<span>18 months</span>
+</label>
+<label class="engagement-option">
+<input type="radio" name="engagementWindow" value="24" onchange="updateMapColors()">
+<span>24 months</span>
+</label>
+<label class="engagement-option">
+<input type="radio" name="engagementWindow" value="never" onchange="updateMapColors()">
+<span>Never visited</span>
+</label>
+</div>
+<div class="muted" style="margin-top:8px;">
+Changes map pin colors based on last visit date. Green = visited within period, Red = not visited.
+</div>
+</div>
+
+<div class="card" style="padding:0;overflow:hidden;">
+<div id="map"></div>
+<div class="map-legend" id="mapLegend">
+<div style="font-weight:600;margin-bottom:12px;font-size:14px;">Legend</div>
+<div class="map-legend-item">
+<div class="map-marker-preview green"></div>
+<span id="legendGreen">Visited < 12 months ago</span>
+</div>
+<div class="map-legend-item">
+<div class="map-marker-preview red"></div>
+<span id="legendRed">Not visited in 12 months</span>
+</div>
+<div class="muted" style="margin-top:12px;font-size:12px;">
+Map shows eligible schools only.<br>
+Filters apply to both views.
+</div>
+</div>
+</div>
+</div>
+
+<!-- TABLE VIEW -->
+<div id="tableContainer" class="active">
+
+<!-- ELIGIBILITY KEY -->
+<div class="card">
+<h3 style="margin:0 0 12px 0;">Eligibility Key</h3>
+<div style="display:flex;gap:24px;flex-wrap:wrap;align-items:center;">
+<div style="display:flex;align-items:center;gap:6px;">
+<span class="badge eligible">✓ Eligible</span>
+<span class="muted" style="font-size:12px;">Meets all criteria</span>
+</div>
+<div style="display:flex;align-items:center;gap:6px;">
+<span class="badge conditional">⚠ Conditional</span>
+<span class="muted" style="font-size:12px;">Inner Regional (case-by-case)</span>
+</div>
+<div style="display:flex;align-items:center;gap:6px;">
+<span class="badge not-eligible">✗ Not Eligible</span>
+<span class="muted" style="font-size:12px;">Does not meet criteria</span>
+</div>
+<div class="muted" style="font-size:12px;margin-left:auto;">💡 Hover over badges to see why a school is eligible</div>
+</div>
+</div>
+
+<!-- SCHOOLS TABLE -->
+<div class="card">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+<h3 style="margin:0;">Schools List</h3>
+</div>
+
+<div style="overflow-x:auto;">
+<table id="schoolTable" aria-label="Schools eligibility table">
+<thead style="position:sticky;top:52px;z-index:10;background:#f9fafb;">
+<tr>
+<th class="sortable" onclick="sortTable('name')" data-column="name" title="Sort by school name" aria-label="School Name, sortable">
+School Name
+</th>
+<th class="sortable" onclick="sortTable('state')" data-column="state" title="Sort by state" aria-label="State, sortable">
+State
+</th>
+<th class="sortable" onclick="sortTable('icsea')" data-column="icsea" title="Sort by ICSEA score" aria-label="ICSEA, sortable">
+<span title="Index of Community Socio-Educational Advantage">ICSEA</span>
+</th>
+<th class="sortable" onclick="sortTable('atsi')" data-column="atsi" title="Sort by ATSI percentage" aria-label="ATSI %, sortable">
+<span title="Aboriginal & Torres Strait Islander student percentage">ATSI %</span>
+</th>
+<th class="sortable" onclick="sortTable('aria')" data-column="aria" title="Sort by ARIA classification" aria-label="ARIA, sortable">
+<span title="Accessibility/Remoteness Index">ARIA</span>
+</th>
+<th class="sortable" onclick="sortTable('sector')" data-column="sector" title="Sort by sector" aria-label="Sector, sortable">
+Sector
+</th>
+<th class="sortable" onclick="sortTable('eligibility')" data-column="eligibility" title="Sort by eligibility status" aria-label="Eligibility, sortable">
+Eligibility
+</th>
+<th class="sortable" onclick="sortTable('sessions')" data-column="sessions" title="Sort by number of sessions" aria-label="Sessions, sortable">
+Sessions
+</th>
+<th aria-label="Actions">Actions</th>
+</tr>
+</thead>
+<tbody id="schoolTableBody">
+<!-- Populated by JavaScript -->
+</tbody>
+</table>
+</div>
+
+<!-- EMPTY STATE -->
+<div id="emptyState" style="display:none;padding:40px;text-align:center;color:var(--muted);">
+<div style="font-size:48px;margin-bottom:16px;">🔍</div>
+<strong style="display:block;font-size:16px;color:var(--charcoal);margin-bottom:8px;">No schools match your search or filters</strong>
+<p style="margin:0;">Try widening your ICSEA range, lowering the minimum ATSI %, removing filters, or changing your search term.</p>
+<button class="btn ghost" onclick="resetAllFilters()" style="margin-top:16px;">Reset All Filters</button>
+</div>
+
+</div>
+</div>
+
+</main>
+
+<!-- GLOSSARY DRAWER -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeGlossary()"></div>
+<div class="drawer" id="glossaryDrawer">
+<div class="drawer-header">
+<h3 style="margin:0;">📖 Glossary</h3>
+<button class="drawer-close" onclick="closeGlossary()">×</button>
+</div>
+<div class="drawer-content">
+<div class="glossary-term">
+<h4>ICSEA</h4>
+<p><strong>Index of Community Socio-Educational Advantage.</strong> A score representing a school's socio-educational context. Average is ~1000. Lower scores indicate more disadvantaged communities. DeadlyScience typically targets schools with ICSEA ≤970.</p>
+</div>
+<div class="glossary-term">
+<h4>ATSI %</h4>
+<p><strong>Aboriginal and Torres Strait Islander student percentage.</strong> The proportion of students who identify as Indigenous. DeadlyScience prioritizes schools with ≥17% ATSI students to maximize impact on First Nations education.</p>
+</div>
+<div class="glossary-term">
+<h4>ARIA</h4>
+<p><strong>Accessibility/Remoteness Index of Australia.</strong> Classifies locations based on accessibility to services:</p>
+<ul style="margin:8px 0 0 20px;padding:0;">
+<li><strong>Major Cities:</strong> Urban centers</li>
+<li><strong>Inner Regional:</strong> Towns near cities</li>
+<li><strong>Outer Regional:</strong> Remote towns</li>
+<li><strong>Remote:</strong> Isolated communities</li>
+<li><strong>Very Remote:</strong> Extremely isolated</li>
+</ul>
+<p style="margin-top:8px;">DeadlyScience focuses on Outer Regional, Remote, and Very Remote schools where STEM access is limited.</p>
+</div>
+<div class="glossary-term">
+<h4>ACARA</h4>
+<p><strong>Australian Curriculum, Assessment and Reporting Authority.</strong> Provides unique codes for all Australian schools. Used for consistent school identification across education systems.</p>
+</div>
+<div class="glossary-term">
+<h4>Eligibility Criteria</h4>
+<p>Schools are <strong>Eligible</strong> if they meet:</p>
+<ul style="margin:8px 0 0 20px;padding:0;">
+<li>ICSEA ≤970, OR</li>
+<li>ATSI ≥17%, OR</li>
+<li>ARIA = Outer Regional, Remote, or Very Remote</li>
+</ul>
+<p style="margin-top:8px;"><strong>Conditional</strong> schools (Inner Regional) require case-by-case review. <strong>Not Eligible</strong> schools don't meet any criteria.</p>
+</div>
+</div>
+</div>
+
+<script>
+// SAMPLE DATA with geocoded lat/lng
+const SCHOOLS = [
+  {id:1, name:"Redfern Public School", state:"NSW", icsea:820, atsi:52, aria:"Major Cities", sector:"Government", eligibility:"eligible", sessions:3, acara:"12345", programs:["DeadlyLabs","Marine Science"], lat:-33.8933, lng:151.2057, lastVisit:"2025-08-15"},
+  {id:2, name:"Dubbo College Senior Campus", state:"NSW", icsea:945, atsi:38, aria:"Outer Regional", sector:"Government", eligibility:"eligible", sessions:2, acara:"98765", programs:["Robotics"], lat:-32.2436, lng:148.6043, lastVisit:"2025-09-20"},
+  {id:3, name:"Kempsey South Public School", state:"NSW", icsea:890, atsi:29, aria:"Inner Regional", sector:"Government", eligibility:"conditional", sessions:1, acara:"54321", programs:["DeadlyLabs"], lat:-31.0789, lng:152.8347, lastVisit:null},
+  {id:4, name:"Holsworthy High School", state:"NSW", icsea:1050, atsi:8, aria:"Major Cities", sector:"Government", eligibility:"not-eligible", sessions:1, acara:"11223", programs:["Chemistry"], lat:-33.9607, lng:150.9479, lastVisit:null},
+  {id:5, name:"Alice Springs High School", state:"NT", icsea:920, atsi:65, aria:"Remote", sector:"Government", eligibility:"eligible", sessions:2, acara:"33221", programs:["DeadlyLabs","Marine Science"], lat:-23.6980, lng:133.8807, lastVisit:"2025-07-10"},
+  {id:6, name:"Broome Senior High School", state:"WA", icsea:910, atsi:71, aria:"Very Remote", sector:"Government", eligibility:"eligible", sessions:2, acara:"44332", programs:["Renewable Energy"], lat:-17.9615, lng:122.2359, lastVisit:"2024-11-05"},
+  {id:7, name:"Darwin Middle School", state:"NT", icsea:980, atsi:42, aria:"Major Cities", sector:"Government", eligibility:"eligible", sessions:1, acara:"55443", programs:["Robotics"], lat:-12.4634, lng:130.8456, lastVisit:"2025-06-22"},
+  {id:8, name:"Corrimal High School", state:"NSW", icsea:1020, atsi:6, aria:"Inner Regional", sector:"Government", eligibility:"conditional", sessions:0, acara:"66554", programs:[], lat:-34.3748, lng:150.8995, lastVisit:null},
+  {id:9, name:"Hobart College", state:"TAS", icsea:1100, atsi:4, aria:"Major Cities", sector:"Government", eligibility:"not-eligible", sessions:0, acara:"77665", programs:[], lat:-42.8826, lng:147.3257, lastVisit:null},
+  {id:10, name:"Launceston Primary", state:"TAS", icsea:950, atsi:19, aria:"Inner Regional", sector:"Government", eligibility:"eligible", sessions:1, acara:"88776", programs:["Marine Science"], lat:-41.4332, lng:147.1441, lastVisit:"2025-05-15"},
+  {id:11, name:"Perth Modern School", state:"WA", icsea:1150, atsi:3, aria:"Major Cities", sector:"Government", eligibility:"not-eligible", sessions:0, acara:"99887", programs:[], lat:-31.9505, lng:115.8605, lastVisit:null},
+  {id:12, name:"Adelaide High School", state:"SA", icsea:1080, atsi:5, aria:"Major Cities", sector:"Government", eligibility:"not-eligible", sessions:0, acara:"11998", programs:[], lat:-34.9285, lng:138.6007, lastVisit:null},
+  {id:13, name:"Wilcannia Central School", state:"NSW", icsea:710, atsi:95, aria:"Very Remote", sector:"Government", eligibility:"eligible", sessions:3, acara:"22334", programs:["DeadlyLabs","Robotics","Marine Science"], lat:-31.5619, lng:143.3756, lastVisit:"2025-09-01"},
+  {id:14, name:"Bourke Public School", state:"NSW", icsea:755, atsi:88, aria:"Remote", sector:"Government", eligibility:"eligible", sessions:2, acara:"33445", programs:["DeadlyLabs"], lat:-30.0922, lng:145.9374, lastVisit:null},
+  {id:15, name:"Mount Druitt High School", state:"NSW", icsea:840, atsi:24, aria:"Major Cities", sector:"Government", eligibility:"eligible", sessions:2, acara:"44556", programs:["Robotics","Chemistry"], lat:-33.7695, lng:150.8168, lastVisit:"2025-10-05"}
+];
+
+// Grant presets
+const GRANT_PRESETS = {
+  'GM3': {
+    name: 'GM3 Foundation',
+    icsea_max: 970,
+    atsi_min: 17,
+    aria: ['Outer Regional', 'Remote', 'Very Remote']
+  },
+  'CSU': {
+    name: 'CSU Grant',
+    aria: ['Inner Regional', 'Outer Regional', 'Remote', 'Very Remote']
+  },
+  'Airtrunk': {
+    name: 'Airtrunk',
+    icsea_max: 950,
+    atsi_min: 25
+  }
+};
+
+// State
+let currentSort = { column: null, direction: 'asc' };
+let currentFilters = {
+  state: [],
+  aria: [],
+  sector: [],
+  eligibility: '',
+  icsea_min: 0,
+  icsea_max: 1300,
+  atsi_min: 17,
+  program: '',
+  grantPreset: null,
+  searchQuery: ''
+};
+
+let map = null;
+let markerClusterGroup = null;
+let currentView = 'table';
+let engagementWindowMonths = 12; // default
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+  renderTable();
+  updateResultCounter();
+  
+  // Close multiselects when clicking outside
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.multiselect')) {
+      document.querySelectorAll('.multiselect.open').forEach(el => el.classList.remove('open'));
+    }
+  });
+  
+  // Initialize Tippy tooltips
+  setTimeout(initTooltips, 100);
+});
+
+// Search functions
+let searchDebounce = null;
+function handleSearch() {
+  const input = document.getElementById('schoolSearch');
+  const searchBox = document.getElementById('searchBox');
+  const query = input.value.trim();
+  
+  // Update UI
+  if (query) {
+    searchBox.classList.add('has-value');
+  } else {
+    searchBox.classList.remove('has-value');
+  }
+  
+  // Debounce
+  clearTimeout(searchDebounce);
+  searchDebounce = setTimeout(() => {
+    currentFilters.searchQuery = query.toLowerCase();
+    applyFilters();
+    renderFilterChips();
+  }, 300);
+}
+
+function clearSearch() {
+  document.getElementById('schoolSearch').value = '';
+  document.getElementById('searchBox').classList.remove('has-value');
+  currentFilters.searchQuery = '';
+  applyFilters();
+  renderFilterChips();
+}
+
+// Multi-select functions
+function toggleMultiselect(id) {
+  const el = document.getElementById(id);
+  const wasOpen = el.classList.contains('open');
+  
+  // Close all
+  document.querySelectorAll('.multiselect.open').forEach(e => e.classList.remove('open'));
+  
+  // Toggle this one
+  if (!wasOpen) {
+    el.classList.add('open');
+  }
+  
+  event.stopPropagation();
+}
+
+function updateMultiselect(type) {
+  const checkboxes = document.querySelectorAll(`input[id^="${type}-"]:checked`);
+  const selected = Array.from(checkboxes).map(cb => cb.value);
+  
+  currentFilters[type] = selected;
+  
+  // Update label
+  const label = document.getElementById(`${type}Label`);
+  if (selected.length === 0) {
+    label.textContent = `All ${type.charAt(0).toUpperCase() + type.slice(1)}${type === 'aria' ? '' : 's'}`;
+  } else if (selected.length === 1) {
+    label.textContent = selected[0];
+  } else {
+    label.textContent = `${selected.length} selected`;
+  }
+  
+  applyFilters();
+  renderFilterChips();
+}
+
+// ICSEA presets
+function setICSEAPreset(min, max) {
+  currentFilters.icsea_min = min;
+  currentFilters.icsea_max = max;
+  
+  document.getElementById('icseaMin').value = min;
+  document.getElementById('icseaMax').value = max;
+  
+  // Update button states
+  document.querySelectorAll('[id^="icsea-preset-"]').forEach(btn => btn.classList.remove('active'));
+  
+  if (min === 0 && max === 970) {
+    document.getElementById('icsea-preset-1').classList.add('active');
+  } else if (min === 971 && max === 1000) {
+    document.getElementById('icsea-preset-2').classList.add('active');
+  } else if (min === 1001 && max === 1300) {
+    document.getElementById('icsea-preset-3').classList.add('active');
+  }
+  
+  document.getElementById('customICSEA').style.display = 'none';
+  
+  applyFilters();
+  renderFilterChips();
+}
+
+function showCustomICSEA() {
+  const customDiv = document.getElementById('customICSEA');
+  customDiv.style.display = customDiv.style.display === 'none' ? 'block' : 'none';
+  
+  document.querySelectorAll('[id^="icsea-preset-"]').forEach(btn => btn.classList.remove('active'));
+  document.getElementById('icsea-preset-custom').classList.add('active');
+}
+
+// ATSI sync
+function syncATSI(source) {
+  const slider = document.getElementById('atsiSlider');
+  const input = document.getElementById('atsiInput');
+  
+  if (source === 'slider') {
+    input.value = slider.value;
+  } else {
+    slider.value = input.value;
+  }
+  
+  currentFilters.atsi_min = parseInt(slider.value);
+  applyFilters();
+  renderFilterChips();
+}
+
+// Grant presets
+function applyGrantPreset() {
+  const preset = document.getElementById('grantPreset').value;
+  
+  if (!preset) {
+    currentFilters.grantPreset = null;
+    renderFilterChips();
+    return;
+  }
+  
+  const criteria = GRANT_PRESETS[preset];
+  currentFilters.grantPreset = { code: preset, ...criteria };
+  
+  // Apply filters
+  if (criteria.icsea_max) {
+    setICSEAPreset(0, criteria.icsea_max);
+  }
+  
+  if (criteria.atsi_min) {
+    document.getElementById('atsiSlider').value = criteria.atsi_min;
+    document.getElementById('atsiInput').value = criteria.atsi_min;
+    currentFilters.atsi_min = criteria.atsi_min;
+  }
+  
+  if (criteria.aria) {
+    // Check ARIA checkboxes
+    document.querySelectorAll('input[id^="aria-"]').forEach(cb => {
+      cb.checked = criteria.aria.includes(cb.value);
+    });
+    updateMultiselect('aria');
+  }
+  
+  renderFilterChips();
+  applyFilters();
+}
+
+// Filter chips
+function renderFilterChips() {
+  const container = document.getElementById('filterChipsContainer');
+  let html = '';
+  
+  // Search chip
+  if (currentFilters.searchQuery) {
+    html += `<span class="chip search-chip">
+      <strong>Search:</strong> ${currentFilters.searchQuery}
+      <button class="chip-remove" onclick="clearSearch()" aria-label="Clear search">×</button>
+    </span>`;
+  }
+  
+  // Grant preset chip
+  if (currentFilters.grantPreset) {
+    html += `<span class="chip grant-preset">
+      <strong>Grant:</strong> ${currentFilters.grantPreset.name}
+      <button class="chip-remove" onclick="removeGrantPreset()" aria-label="Remove grant preset">×</button>
+    </span>`;
+  }
+  
+  // State chips
+  currentFilters.state.forEach(s => {
+    html += `<span class="chip">
+      State: ${s}
+      <button class="chip-remove" onclick="removeChip('state','${s}')" aria-label="Remove ${s}">×</button>
+    </span>`;
+  });
+  
+  // ARIA chips
+  currentFilters.aria.forEach(a => {
+    html += `<span class="chip">
+      ARIA: ${a}
+      <button class="chip-remove" onclick="removeChip('aria','${a}')" aria-label="Remove ${a}">×</button>
+    </span>`;
+  });
+  
+  // Sector chips
+  currentFilters.sector.forEach(s => {
+    html += `<span class="chip">
+      Sector: ${s}
+      <button class="chip-remove" onclick="removeChip('sector','${s}')" aria-label="Remove ${s}">×</button>
+    </span>`;
+  });
+  
+  // ICSEA chip (if not default)
+  if (currentFilters.icsea_min !== 0 || currentFilters.icsea_max !== 1300) {
+    html += `<span class="chip">
+      ICSEA: ${currentFilters.icsea_min}–${currentFilters.icsea_max}
+      <button class="chip-remove" onclick="removeICSEAFilter()" aria-label="Remove ICSEA filter">×</button>
+    </span>`;
+  }
+  
+  // ATSI chip (if not default)
+  if (currentFilters.atsi_min !== 17) {
+    html += `<span class="chip">
+      ATSI ≥${currentFilters.atsi_min}%
+      <button class="chip-remove" onclick="removeATSIFilter()" aria-label="Remove ATSI filter">×</button>
+    </span>`;
+  }
+  
+  // Clear all button
+  if (html) {
+    html += `<button class="btn ghost small" onclick="resetAllFilters()" style="margin-left:8px;">Clear All</button>`;
+  }
+  
+  container.innerHTML = html;
+}
+
+function removeChip(type, value) {
+  const checkbox = document.getElementById(`${type}-${value.replace(/ /g, ' ')}`);
+  if (checkbox) {
+    checkbox.checked = false;
+    updateMultiselect(type);
+  }
+}
+
+function removeGrantPreset() {
+  document.getElementById('grantPreset').value = '';
+  currentFilters.grantPreset = null;
+  renderFilterChips();
+}
+
+function removeICSEAFilter() {
+  setICSEAPreset(0, 1300);
+}
+
+function removeATSIFilter() {
+  document.getElementById('atsiSlider').value = 17;
+  document.getElementById('atsiInput').value = 17;
+  currentFilters.atsi_min = 17;
+  applyFilters();
+  renderFilterChips();
+}
+
+function resetAllFilters() {
+  // Reset search
+  clearSearch();
+  
+  // Reset dropdowns
+  document.getElementById('eligibilityFilter').value = '';
+  document.getElementById('programFilter').value = '';
+  document.getElementById('grantPreset').value = '';
+  
+  // Reset multiselects
+  document.querySelectorAll('.multiselect input[type="checkbox"]').forEach(cb => cb.checked = false);
+  updateMultiselect('state');
+  updateMultiselect('aria');
+  updateMultiselect('sector');
+  
+  // Reset ICSEA
+  setICSEAPreset(0, 1300);
+  
+  // Reset ATSI
+  document.getElementById('atsiSlider').value = 17;
+  document.getElementById('atsiInput').value = 17;
+  
+  // Reset state
+  currentFilters = {
+    state: [],
+    aria: [],
+    sector: [],
+    eligibility: '',
+    icsea_min: 0,
+    icsea_max: 1300,
+    atsi_min: 17,
+    program: '',
+    grantPreset: null,
+    searchQuery: ''
+  };
+  
+  renderFilterChips();
+  applyFilters();
+}
+
+// Apply filters
+function applyFilters() {
+  const eligibility = document.getElementById('eligibilityFilter').value;
+  const program = document.getElementById('programFilter').value;
+  
+  currentFilters.eligibility = eligibility;
+  currentFilters.program = program;
+  currentFilters.icsea_min = parseInt(document.getElementById('icseaMin').value) || 0;
+  currentFilters.icsea_max = parseInt(document.getElementById('icseaMax').value) || 1300;
+  
+  renderTable();
+  updateResultCounter();
+  
+  // Update map if in map view
+  if (currentView === 'map' && map) {
+    renderMap();
+  }
+}
+
+function getFilteredSchools() {
+  return SCHOOLS.filter(school => {
+    // Search query
+    if (currentFilters.searchQuery) {
+      const searchLower = currentFilters.searchQuery;
+      const nameMatch = school.name.toLowerCase().includes(searchLower);
+      const acaraMatch = school.acara.includes(searchLower);
+      
+      if (!nameMatch && !acaraMatch) {
+        return false;
+      }
+    }
+    
+    // Eligibility
+    if (currentFilters.eligibility && school.eligibility !== currentFilters.eligibility) {
+      return false;
+    }
+    
+    // State (multi-select)
+    if (currentFilters.state.length > 0 && !currentFilters.state.includes(school.state)) {
+      return false;
+    }
+    
+    // ARIA (multi-select)
+    if (currentFilters.aria.length > 0 && !currentFilters.aria.includes(school.aria)) {
+      return false;
+    }
+    
+    // Sector (multi-select)
+    if (currentFilters.sector.length > 0 && !currentFilters.sector.includes(school.sector)) {
+      return false;
+    }
+    
+    // ICSEA
+    if (school.icsea < currentFilters.icsea_min || school.icsea > currentFilters.icsea_max) {
+      return false;
+    }
+    
+    // ATSI
+    if (school.atsi < currentFilters.atsi_min) {
+      return false;
+    }
+    
+    // Program
+    if (currentFilters.program && !school.programs.includes(currentFilters.program)) {
+      return false;
+    }
+    
+    return true;
+  });
+}
+
+// Render table
+function renderTable() {
+  const filtered = getFilteredSchools();
+  const tbody = document.getElementById('schoolTableBody');
+  const emptyState = document.getElementById('emptyState');
+  
+  if (filtered.length === 0) {
+    tbody.innerHTML = '';
+    emptyState.style.display = 'block';
+    return;
+  }
+  
+  emptyState.style.display = 'none';
+  
+  tbody.innerHTML = filtered.map(school => {
+    const badgeClass = school.eligibility;
+    const badgeText = school.eligibility === 'eligible' ? '✓ Eligible' :
+                      school.eligibility === 'conditional' ? '⚠ Conditional' :
+                      '✗ Not Eligible';
+    
+    return `<tr>
+      <td><strong>${school.name}</strong></td>
+      <td>${school.state}</td>
+      <td>${school.icsea}</td>
+      <td>${school.atsi}%</td>
+      <td>${school.aria}</td>
+      <td>${school.sector}</td>
+      <td>
+        <span class="badge ${badgeClass}" data-tippy-content="${getEligibilityTooltip(school)}">
+          ${badgeText}
+        </span>
+      </td>
+      <td>${school.sessions}</td>
+      <td>
+        <button class="copy-btn" onclick="copySchoolDetails('${school.name}', '${school.acara}')" title="Copy school details">
+          📋
+        </button>
+      </td>
+    </tr>`;
+  }).join('');
+  
+  // Reinitialize tooltips
+  setTimeout(initTooltips, 100);
+}
+
+function getEligibilityTooltip(school) {
+  const reasons = [];
+  
+  if (school.icsea <= 970) reasons.push('✓ ICSEA ≤970');
+  else reasons.push('✗ ICSEA >970');
+  
+  if (school.atsi >= 17) reasons.push('✓ ATSI ≥17%');
+  else reasons.push('✗ ATSI <17%');
+  
+  if (['Outer Regional','Remote','Very Remote'].includes(school.aria)) {
+    reasons.push('✓ Remote location');
+  } else if (school.aria === 'Inner Regional') {
+    reasons.push('⚠ Inner Regional (conditional)');
+  } else {
+    reasons.push('✗ Major city');
+  }
+  
+  return reasons.join('<br>');
+}
+
+function initTooltips() {
+  if (typeof tippy !== 'undefined') {
+    tippy('[data-tippy-content]', {
+      allowHTML: true,
+      theme: 'light-border',
+      placement: 'top'
+    });
+  }
+}
+
+// Sort table
+function sortTable(column) {
+  if (currentSort.column === column) {
+    currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+  } else {
+    currentSort.column = column;
+    currentSort.direction = 'asc';
+  }
+  
+  // Update headers
+  document.querySelectorAll('th.sortable').forEach(th => {
+    th.classList.remove('sorted-asc', 'sorted-desc');
+  });
+  
+  const header = document.querySelector(`th[data-column="${column}"]`);
+  header.classList.add(currentSort.direction === 'asc' ? 'sorted-asc' : 'sorted-desc');
+  
+  // Sort
+  const sorted = [...getFilteredSchools()].sort((a, b) => {
+    let valA = a[column];
+    let valB = b[column];
+    
+    if (typeof valA === 'string') {
+      valA = valA.toLowerCase();
+      valB = valB.toLowerCase();
+    }
+    
+    if (valA < valB) return currentSort.direction === 'asc' ? -1 : 1;
+    if (valA > valB) return currentSort.direction === 'asc' ? 1 : -1;
+    return 0;
+  });
+  
+  const tbody = document.getElementById('schoolTableBody');
+  tbody.innerHTML = sorted.map(school => {
+    const badgeClass = school.eligibility;
+    const badgeText = school.eligibility === 'eligible' ? '✓ Eligible' :
+                      school.eligibility === 'conditional' ? '⚠ Conditional' :
+                      '✗ Not Eligible';
+    
+    return `<tr>
+      <td><strong>${school.name}</strong></td>
+      <td>${school.state}</td>
+      <td>${school.icsea}</td>
+      <td>${school.atsi}%</td>
+      <td>${school.aria}</td>
+      <td>${school.sector}</td>
+      <td>
+        <span class="badge ${badgeClass}" data-tippy-content="${getEligibilityTooltip(school)}">
+          ${badgeText}
+        </span>
+      </td>
+      <td>${school.sessions}</td>
+      <td>
+        <button class="copy-btn" onclick="copySchoolDetails('${school.name}', '${school.acara}')" title="Copy school details">
+          📋
+        </button>
+      </td>
+    </tr>`;
+  }).join('');
+  
+  setTimeout(initTooltips, 100);
+}
+
+// Update counter
+function updateResultCounter() {
+  const count = getFilteredSchools().length;
+  const total = SCHOOLS.length;
+  document.getElementById('resultCounter').textContent = `Showing ${count} of ${total} schools`;
+}
+
+// Copy school details
+function copySchoolDetails(name, acara) {
+  const text = `${name} (ACARA ${acara})`;
+  navigator.clipboard.writeText(text).then(() => {
+    alert(`✓ Copied: ${text}`);
+  });
+}
+
+// Export CSV
+function exportToCSV() {
+  const filtered = getFilteredSchools();
+  
+  if (filtered.length === 0) {
+    alert('No schools to export. Adjust your filters or search.');
+    return;
+  }
+  
+  const headers = ['School Name', 'State', 'ICSEA', 'ATSI %', 'ARIA', 'Sector', 'Eligibility', 'Sessions', 'ACARA Code'];
+  const rows = filtered.map(s => [
+    s.name,
+    s.state,
+    s.icsea,
+    s.atsi,
+    s.aria,
+    s.sector,
+    s.eligibility,
+    s.sessions,
+    s.acara
+  ]);
+  
+  let csv = headers.join(',') + '\n';
+  csv += rows.map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+  
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `eligibility_export_${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+  window.URL.revokeObjectURL(url);
+}
+
+// View switching
+function switchView(view) {
+  currentView = view;
+  
+  const tableTab = document.getElementById('tableViewTab');
+  const mapTab = document.getElementById('mapViewTab');
+  const tableContainer = document.getElementById('tableContainer');
+  const mapContainer = document.getElementById('mapContainer');
+  
+  if (view === 'table') {
+    tableTab.classList.add('active');
+    mapTab.classList.remove('active');
+    tableContainer.classList.add('active');
+    mapContainer.classList.remove('active');
+  } else {
+    mapTab.classList.add('active');
+    tableTab.classList.remove('active');
+    mapContainer.classList.add('active');
+    tableContainer.classList.remove('active');
+    
+    // Initialize map if needed
+    if (!map) {
+      initMap();
+    }
+    renderMap();
+  }
+}
+
+// Engagement window toggle
+function updateMapColors() {
+  const selected = document.querySelector('input[name="engagementWindow"]:checked').value;
+  
+  if (selected === 'never') {
+    engagementWindowMonths = null; // Special case
+  } else {
+    engagementWindowMonths = parseInt(selected);
+  }
+  
+  updateMapLegend();
+  
+  if (map) {
+    renderMap();
+  }
+}
+
+function updateMapLegend() {
+  const legendGreen = document.getElementById('legendGreen');
+  const legendRed = document.getElementById('legendRed');
+  
+  if (engagementWindowMonths === null) {
+    legendGreen.textContent = 'Has session history';
+    legendRed.textContent = 'Never visited';
+  } else {
+    legendGreen.textContent = `Visited < ${engagementWindowMonths} months ago`;
+    legendRed.textContent = `Not visited in ${engagementWindowMonths} months`;
+  }
+}
+
+// Map functions
+function initMap() {
+  // Create map centered on Australia
+  map = L.map('map').setView([-25.2744, 133.7751], 5);
+  
+  // Add OpenStreetMap tiles
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors',
+    maxZoom: 18
+  }).addTo(map);
+  
+  // Initialize marker cluster group
+  markerClusterGroup = L.markerClusterGroup({
+    maxClusterRadius: 60,
+    spiderfyOnMaxZoom: true,
+    showCoverageOnHover: false,
+    zoomToBoundsOnClick: true
+  });
+  
+  map.addLayer(markerClusterGroup);
+}
+
+function renderMap() {
+  if (!map) return;
+  
+  // Clear existing markers
+  markerClusterGroup.clearLayers();
+  
+  // Get filtered eligible schools
+  const filtered = getFilteredSchools().filter(s => s.eligibility === 'eligible');
+  
+  if (filtered.length === 0) {
+    return;
+  }
+  
+  // Calculate cutoff date
+  let cutoffDate = null;
+  if (engagementWindowMonths !== null) {
+    cutoffDate = new Date();
+    cutoffDate.setMonth(cutoffDate.getMonth() - engagementWindowMonths);
+  }
+  
+  filtered.forEach(school => {
+    if (!school.lat || !school.lng) return;
+    
+    // Determine color
+    let markerColor = 'red';
+    let visitStatus = '';
+    
+    if (engagementWindowMonths === null) {
+      // "Never visited" mode
+      if (school.lastVisit) {
+        markerColor = 'green';
+        visitStatus = `Has session history (last: ${school.lastVisit})`;
+      } else {
+        markerColor = 'red';
+        visitStatus = `Never visited`;
+      }
+    } else {
+      // Time-based mode
+      if (school.lastVisit && new Date(school.lastVisit) >= cutoffDate) {
+        markerColor = 'green';
+        visitStatus = `Last visited: ${school.lastVisit}`;
+      } else if (school.lastVisit) {
+        markerColor = 'red';
+        visitStatus = `Not visited in ${engagementWindowMonths} months (last: ${school.lastVisit})`;
+      } else {
+        markerColor = 'red';
+        visitStatus = `Never visited`;
+      }
+    }
+    
+    // Create custom icon
+    const icon = L.divIcon({
+      className: `${markerColor}-marker`,
+      iconSize: [16, 16],
+      html: ''
+    });
+    
+    // Create marker
+    const marker = L.marker([school.lat, school.lng], { icon: icon });
+    
+    // Popup content
+    const popupContent = `
+      <div style="min-width:200px;">
+        <strong style="font-size:14px;">${school.name}</strong><br>
+        <div style="margin-top:8px;font-size:13px;">
+          <strong>ACARA:</strong> ${school.acara}<br>
+          <strong>State:</strong> ${school.state}<br>
+          <strong>ICSEA:</strong> ${school.icsea}<br>
+          <strong>ATSI:</strong> ${school.atsi}%<br>
+          <strong>ARIA:</strong> ${school.aria}<br>
+          <strong>Status:</strong> ${visitStatus}<br>
+          <strong>Sessions:</strong> ${school.sessions}
+        </div>
+        <div style="margin-top:12px;">
+          <button onclick="copySchoolDetails('${school.name}', '${school.acara}')" 
+                  style="padding:6px 12px;background:#3b82f6;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;">
+            📋 Copy Details
+          </button>
+        </div>
+      </div>
+    `;
+    
+    marker.bindPopup(popupContent);
+    
+    // Tooltip on hover
+    marker.bindTooltip(`${school.name}<br>ICSEA: ${school.icsea} | ATSI: ${school.atsi}%`, {
+      direction: 'top',
+      offset: [0, -10]
+    });
+    
+    markerClusterGroup.addLayer(marker);
+  });
+  
+  // Fit bounds to show all markers
+  if (filtered.length > 0) {
+    const bounds = markerClusterGroup.getBounds();
+    if (bounds.isValid()) {
+      map.fitBounds(bounds, { padding: [50, 50] });
+    }
+  }
+}
+
+// Glossary
+function openGlossary() {
+  document.getElementById('glossaryDrawer').classList.add('open');
+  document.getElementById('drawerOverlay').classList.add('active');
+}
+
+function closeGlossary() {
+  document.getElementById('glossaryDrawer').classList.remove('open');
+  document.getElementById('drawerOverlay').classList.remove('active');
+}
+</script>
+
+</body>
+</html>
