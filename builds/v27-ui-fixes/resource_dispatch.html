@@ -1,0 +1,1335 @@
+<!doctype html>
+<html lang='en-AU'>
+<head>
+<meta charset='utf-8'/>
+<meta name='viewport' content='width=device-width,initial-scale=1'/>
+<title>Shipments & Resource Tracking</title>
+<style>
+.skip-link{position:absolute;left:-999px;top:auto;width:1px;height:1px;overflow:hidden}
+.skip-link:focus{position:fixed;left:16px;top:16px;width:auto;height:auto;padding:12px 16px;background:var(--charcoal);color:var(--white);z-index:10000;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.25)}
+
+:root{
+  --ink:#111827;
+  --charcoal:#1f2937;
+  --muted:#6b7280;
+  --bg:#f3f4f6;
+  --white:#fff;
+  --line:#e5e7eb;
+  --green:#0a7d57;
+  --red:#c62828;
+  --blue:#3b82f6;
+  --amber:#f59e0b;
+}
+
+* { box-sizing:border-box; }
+
+body {
+  margin:0;
+  font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+  background:var(--bg);
+  color:var(--charcoal);
+  line-height:1.5;
+}
+
+a { color:var(--blue); text-decoration:none; }
+a:hover { text-decoration:underline; }
+
+.wrap { max-width:1000px; margin:0 auto; padding:16px; }
+
+.card {
+  background:var(--white);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:20px;
+  box-shadow:0 2px 8px rgba(0,0,0,.06);
+  margin-bottom:16px;
+}
+
+.card.stub {
+  border:2px dashed #93c5fd;
+  background:#f9fafb;
+}
+
+.btn {
+  display:inline-block;
+  background:var(--charcoal);
+  color:#fff;
+  padding:10px 16px;
+  border-radius:8px;
+  border:0;
+  cursor:pointer;
+  font-size:14px;
+  font-weight:600;
+  transition:all 0.2s;
+}
+
+.btn:hover { opacity:0.9; }
+.btn:disabled { opacity:0.5; cursor:not-allowed; }
+.btn.primary { background:var(--green); }
+.btn.secondary { background:var(--blue); }
+.btn.danger { background:var(--red); }
+.btn.ghost { background:transparent; color:var(--charcoal); border:1px solid var(--line); }
+.btn.small { padding:6px 12px; font-size:13px; }
+
+input, select, textarea {
+  width:100%;
+  padding:10px;
+  border:1px solid var(--line);
+  border-radius:8px;
+  background:#fff;
+  font-size:14px;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline:2px solid var(--blue);
+  border-color:var(--blue);
+}
+
+label {
+  display:block;
+  font-weight:600;
+  margin-top:16px;
+  margin-bottom:6px;
+  font-size:14px;
+}
+
+.label-inline {
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  margin-top:12px;
+  font-weight:500;
+  cursor:pointer;
+}
+
+.muted { color:var(--muted); font-size:13px; }
+
+header {
+  position:sticky;
+  top:0;
+  z-index:100;
+  background:#fff;
+  border-bottom:1px solid #e5e7eb;
+  padding:12px 0;
+  box-shadow:0 2px 4px rgba(0,0,0,0.05);
+}
+
+.success {
+  background:#D1FAE5;
+  border:1px solid #A7F3D0;
+  color:#065F46;
+  padding:12px;
+  border-radius:8px;
+  margin:12px 0;
+}
+
+.warning {
+  background:#FEF3C7;
+  border:1px solid #FDE68A;
+  color:#92400e;
+  padding:12px;
+  border-radius:8px;
+  margin:12px 0;
+}
+
+.info {
+  background:#DBEAFE;
+  border:1px solid #93C5FD;
+  color:#1E40AF;
+  padding:12px;
+  border-radius:8px;
+  margin:12px 0;
+}
+
+.error {
+  background:#FEE2E2;
+  border:1px solid #FCA5A5;
+  color:#991B1B;
+  padding:12px;
+  border-radius:8px;
+  margin:12px 0;
+}
+
+.badge {
+  display:inline-block;
+  padding:4px 10px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:600;
+}
+
+.badge.draft { background:#f3f4f6; color:#6b7280; }
+.badge.packed { background:#dbeafe; color:#1e40af; }
+.badge.dispatched { background:#fef3c7; color:#92400e; }
+.badge.delivered { background:#d1fae5; color:#065f46; }
+.badge.cancelled { background:#fee2e2; color:#991b1b; }
+.badge.fulfilled { background:#d1fae5; color:#065f46; }
+
+table {
+  width:100%;
+  border-collapse:collapse;
+  margin-top:12px;
+}
+
+th {
+  background:#f9fafb;
+  padding:10px;
+  text-align:left;
+  font-size:13px;
+  font-weight:600;
+  border-bottom:2px solid #e5e7eb;
+}
+
+td {
+  padding:10px;
+  border-bottom:1px solid #f3f4f6;
+  font-size:13px;
+}
+
+.line-item-input {
+  width:100%;
+  padding:6px;
+  font-size:13px;
+}
+
+.address-block {
+  background:#f9fafb;
+  border:1px solid #e5e7eb;
+  padding:16px;
+  border-radius:8px;
+  margin:16px 0;
+}
+
+.tooltip {
+  position:relative;
+  display:inline-block;
+  cursor:help;
+  color:var(--blue);
+  font-size:14px;
+  margin-left:4px;
+}
+
+.modal {
+  display:none;
+  position:fixed;
+  top:0;
+  left:0;
+  right:0;
+  bottom:0;
+  background:rgba(0,0,0,0.5);
+  z-index:1000;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+}
+
+.modal.active {
+  display:flex;
+}
+
+.modal-content {
+  background:white;
+  border-radius:12px;
+  max-width:800px;
+  width:100%;
+  max-height:90vh;
+  overflow-y:auto;
+  padding:24px;
+}
+
+.modal-header {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:20px;
+  padding-bottom:16px;
+  border-bottom:2px solid #e5e7eb;
+}
+
+.close-btn {
+  background:none;
+  border:none;
+  font-size:24px;
+  cursor:pointer;
+  padding:0;
+  color:var(--muted);
+}
+
+.close-btn:hover {
+  color:var(--charcoal);
+}
+
+.collapsible-header {
+  cursor:pointer;
+  user-select:none;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:12px;
+  background:#f9fafb;
+  border-radius:8px;
+  transition:background 0.2s;
+}
+
+.collapsible-header:hover {
+  background:#f3f4f6;
+}
+
+.collapsible-icon {
+  transition:transform 0.3s;
+}
+
+.collapsible-icon.open {
+  transform:rotate(180deg);
+}
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main-content">Skip to main content</a>
+
+<header>
+<div class="wrap" style="display:flex;align-items:center;justify-content:space-between;">
+<div>
+<strong style="font-size:16px;">📦 Shipments & Resource Tracking</strong>
+<span class="muted" style="margin-left:12px;">Dispatch STEM kits and resources to schools & organizations</span>
+</div>
+<div style="display:flex;gap:8px;">
+<button class="btn secondary small" onclick="openBulkUpload()">📤 Bulk Upload CSV</button>
+<a class="btn ghost small" href="index.html">Index</a>
+</div>
+</div>
+</header>
+
+<main id="main-content" tabindex="-1" class='wrap' style='padding-top:16px;' role="main">
+
+<!-- SHOPIFY INTEGRATION STUB (Collapsed) -->
+<div class="card stub">
+<div class="collapsible-header" onclick="toggleShopifyStub()">
+<div>
+<strong>🛍️ Shopify Integration</strong>
+<span class="muted" style="margin-left:8px;font-size:12px;">(Coming Soon - Click to preview)</span>
+</div>
+<span id="shopifyIcon" class="collapsible-icon">▼</span>
+</div>
+
+<div id="shopifyStubContent" style="display:none;margin-top:16px;">
+<div class="info">
+<strong>How Shopify sync will work:</strong><br><br>
+
+<strong>📥 When you create a shipment in Salesforce:</strong>
+<ul style="margin:8px 0 0 20px;font-size:13px;">
+<li>If Shopify Order ID exists → Shows order details below</li>
+<li>Displays: Order #, Fulfillment status, Tracking #, Last sync time</li>
+</ul>
+
+<strong>🔄 When Shopify fulfills an order:</strong>
+<ul style="margin:8px 0 0 20px;font-size:13px;">
+<li>Webhook automatically updates this shipment</li>
+<li>Status → Dispatched</li>
+<li>Tracking info populated</li>
+<li>Carrier details synced</li>
+</ul>
+
+<strong>📝 Manual dispatch (no Shopify order):</strong>
+<ul style="margin:8px 0 0 20px;font-size:13px;">
+<li>You can still mark as Dispatched in Salesforce</li>
+<li>Warning shown: "No Shopify order linked"</li>
+<li>Useful for direct shipments bypassing Shopify</li>
+</ul>
+</div>
+
+<div style="margin-top:12px;padding:16px;background:#fff;border:1px solid #e5e7eb;border-radius:8px;">
+<strong style="display:block;margin-bottom:12px;">Example Shopify data (when integrated):</strong>
+<table style="margin:0;">
+<tr>
+<td style="padding:4px 8px;border:none;"><strong>Order #:</strong></td>
+<td style="padding:4px 8px;border:none;"><a href="https://admin.shopify.com/orders/12345" target="_blank">#12345</a></td>
+</tr>
+<tr>
+<td style="padding:4px 8px;border:none;"><strong>Fulfillment:</strong></td>
+<td style="padding:4px 8px;border:none;"><span class="badge fulfilled">Fulfilled</span></td>
+</tr>
+<tr>
+<td style="padding:4px 8px;border:none;"><strong>Tracking:</strong></td>
+<td style="padding:4px 8px;border:none;">AP123456789AU (Australia Post)</td>
+</tr>
+<tr>
+<td style="padding:4px 8px;border:none;"><strong>Last Sync:</strong></td>
+<td style="padding:4px 8px;border:none;">2 hours ago</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+
+<!-- SHIPMENT FORM -->
+<div class="card">
+<h2 style="margin:0 0 20px 0;">Create Shipment</h2>
+
+<!-- RECIPIENT SEARCH (Schools + Organizations) -->
+<div>
+<label>Recipient (School or Organization) *</label>
+<input 
+  id="recipientSearch" 
+  type="text" 
+  placeholder="Type school name, ACARA code, or organization..." 
+  oninput="searchRecipient()"
+  autocomplete="off"
+/>
+<div class="muted" style="margin-top:4px;">
+Search for ACARA schools, juvenile justice facilities, community centers, etc.
+</div>
+<div id="recipientResults" style="margin-top:8px;"></div>
+<div id="selectedRecipient" class="success" style="display:none;margin-top:8px;"></div>
+</div>
+
+<!-- ADDRESS BLOCK -->
+<div id="addressBlock" class="address-block" style="display:none;">
+<h4 style="margin:0 0 12px 0;">📍 Delivery Address</h4>
+<div id="computedAddress" style="margin-bottom:12px;"></div>
+
+<label class="label-inline">
+<input type="checkbox" id="useAltAddress" onchange="toggleAltAddress()">
+<span>
+Use alternate delivery address
+<span class="tooltip" title="Use a one-off delivery address for this shipment. For future shipments, tick 'Save as default'">ℹ️</span>
+</span>
+</label>
+
+<div id="altAddressFields" style="display:none;margin-top:12px;">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+<div>
+<label style="margin-top:0;">Street Address *</label>
+<input type="text" id="altStreet" placeholder="123 Main Street">
+</div>
+<div>
+<label style="margin-top:0;">Suburb *</label>
+<input type="text" id="altSuburb" placeholder="Sydney">
+</div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;">
+<div>
+<label style="margin-top:0;">State *</label>
+<select id="altState">
+<option value="">Select state...</option>
+<option value="NSW">NSW</option>
+<option value="VIC">VIC</option>
+<option value="QLD">QLD</option>
+<option value="SA">SA</option>
+<option value="WA">WA</option>
+<option value="TAS">TAS</option>
+<option value="NT">NT</option>
+<option value="ACT">ACT</option>
+</select>
+</div>
+<div>
+<label style="margin-top:0;">Postcode *</label>
+<input type="text" id="altPostcode" placeholder="2000" maxlength="4">
+</div>
+</div>
+
+<label class="label-inline" style="margin-top:16px;">
+<input type="checkbox" id="saveAsDefault">
+<span>
+Save as recipient's default delivery address
+<span class="tooltip" title="Updates the recipient's default delivery address so future shipments prefill this address">ℹ️</span>
+</span>
+</label>
+</div>
+</div>
+
+<!-- SESSION & FUNDER (DROPDOWNS) -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+<div>
+<label>Session (optional)</label>
+<select id="sessionCode">
+<option value="">No session linked</option>
+<option value="SESS-001">SESS-001 - Redfern PS Marine Science (15 Nov 2025)</option>
+<option value="SESS-002">SESS-002 - Dubbo College Robotics (22 Nov 2025)</option>
+<option value="SESS-003">SESS-003 - Alice Springs Chemistry (1 Dec 2025)</option>
+<option value="SESS-004">SESS-004 - Broome HS LEGO Workshop (5 Dec 2025)</option>
+<option value="SESS-005">SESS-005 - Reiby JJ STEM Day (10 Dec 2025)</option>
+</select>
+<div class="muted">Link this shipment to a specific session</div>
+</div>
+<div>
+<label>Header Funder (optional)</label>
+<select id="headerFunder" onchange="updateHeaderFunder()">
+<option value="">No default funder</option>
+<option value="GM3">GM3 Foundation</option>
+<option value="CSU">CSU Grant</option>
+<option value="Airtrunk">Airtrunk</option>
+<option value="BrianMDavis">Brian M Davis Foundation</option>
+<option value="Waratah">Waratah</option>
+<option value="WomenNSW">Women NSW</option>
+</select>
+<div class="muted">Default funder (auto-fills line items)</div>
+</div>
+</div>
+
+<!-- LINE ITEMS TABLE -->
+<div style="margin-top:24px;">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+<h3 style="margin:0;">Line Items</h3>
+<button class="btn small secondary" onclick="addLineItem()">+ Add Line</button>
+</div>
+
+<div style="overflow-x:auto;">
+<table id="lineItemsTable">
+<thead>
+<tr>
+<th style="width:30%;">
+Bundle SKU *
+<span class="tooltip" title="We use bundle-level SKUs to represent kit types. Shopify manages the detailed components. Scalable to additional bundles as needed.">ℹ️</span>
+</th>
+<th style="width:12%;">Qty *</th>
+<th style="width:10%;">UOM</th>
+<th style="width:20%;">Line Funder</th>
+<th style="width:20%;">Description</th>
+<th style="width:8%;">Actions</th>
+</tr>
+</thead>
+<tbody id="lineItemsBody">
+<tr>
+<td colspan="6" class="muted" style="text-align:center;padding:20px;">
+Click "+ Add Line" to add products to this shipment
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<div class="warning" style="margin-top:12px;">
+<strong>📦 Bundle SKU Strategy:</strong> Shipments use bundle-level SKUs (e.g., LEGO-JNR, LEGO-PRI, STEM-MIX) to represent kit types rather than individual items. Shopify manages the underlying inventory and detailed components. Salesforce only needs to know the bundle SKU, quantity, and optional funder link. (Current example set: ~5–10 bundle SKUs; scalable as needed.)
+</div>
+</div>
+
+<!-- STATUS & SHIPPING INFO -->
+<div style="margin-top:24px;">
+<h3 style="margin:0 0 16px 0;">Shipment Details</h3>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+<div>
+<label>Status</label>
+<select id="shipmentStatus">
+<option value="Draft">Draft</option>
+<option value="Packed">Packed</option>
+<option value="Dispatched">Dispatched</option>
+<option value="Delivered">Delivered</option>
+<option value="Cancelled">Cancelled</option>
+</select>
+</div>
+<div>
+<label>Ship Date</label>
+<input type="date" id="shipDate">
+</div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+<div>
+<label>Carrier</label>
+<input type="text" id="carrier" placeholder="e.g., Australia Post">
+</div>
+<div>
+<label>Tracking Number</label>
+<input type="text" id="trackingNumber" placeholder="e.g., AP123456789AU">
+</div>
+</div>
+
+<label>Delivery Notes</label>
+<textarea id="deliveryNotes" rows="2" placeholder="e.g., Use depot delivery, Contact Jenny on arrival"></textarea>
+</div>
+
+<!-- ACTION BUTTONS -->
+<div style="margin-top:24px;display:flex;gap:12px;flex-wrap:wrap;">
+<button class="btn primary" onclick="saveShipment('Draft')">💾 Save as Draft</button>
+<button class="btn secondary" onclick="saveShipment('Packed')">📦 Mark as Packed</button>
+<button class="btn secondary" onclick="saveShipment('Dispatched')">🚚 Mark as Dispatched</button>
+<button class="btn secondary" onclick="saveShipment('Delivered')">✅ Mark as Delivered</button>
+<button class="btn ghost" onclick="resetForm()">Clear Form</button>
+</div>
+
+<div class="info" style="margin-top:16px;">
+<strong>✉️ Auto-reminders enabled:</strong> When shipment is created, recipient contacts will receive reminders at 24hr, 48hr, and 72hr (CC coordinator) if demographics are not submitted.
+</div>
+</div>
+
+</main>
+
+<!-- BULK UPLOAD MODAL -->
+<div id="bulkUploadModal" class="modal">
+<div class="modal-content">
+<div class="modal-header">
+<h2 style="margin:0;">📤 Bulk Upload Shipments (CSV)</h2>
+<button class="close-btn" onclick="closeBulkUpload()">×</button>
+</div>
+
+<div class="info">
+<strong>How it works:</strong> Upload a CSV file with multiple rows. Rows are grouped by recipient ACARA code to create one shipment per recipient with multiple line items.
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:20px 0;">
+<div>
+<h4 style="margin:0 0 12px 0;">Step 1: Download Template</h4>
+<button class="btn secondary" onclick="downloadCSVTemplate()">⬇️ Download CSV Template</button>
+<div class="muted" style="margin-top:8px;font-size:12px;">
+Opens template with correct column headers and example data
+</div>
+</div>
+<div>
+<h4 style="margin:0 0 12px 0;">Step 2: Upload Your CSV</h4>
+<input type="file" id="csvFile" accept=".csv" style="margin-bottom:8px;" />
+<button class="btn primary" onclick="processCSV()">🚀 Process & Validate</button>
+</div>
+</div>
+
+<div class="warning">
+<strong>⚠️ CSV Format Requirements:</strong>
+<pre style="margin:8px 0;padding:12px;background:#fff;border-radius:6px;font-size:12px;overflow-x:auto;">Recipient_ACARA_Code,Recipient_Name,SKU,Quantity,Line_Funder,Session_Code,Ship_Date,Carrier,Tracking
+12345,Redfern PS,LEGO-PRI,5,GM3,SESS-001,2025-11-15,Australia Post,
+12345,Redfern PS,BOOKS-STD,10,CSU,SESS-001,,,
+JUVJUST-001,Reiby JJ,STEM-MIX,3,,SESS-005,,,</pre>
+
+<ul style="margin:8px 0 0 20px;font-size:13px;">
+<li><strong>Recipient_ACARA_Code:</strong> ACARA code for schools, or custom ID for organizations (e.g., JUVJUST-001)</li>
+<li><strong>Recipient_Name:</strong> Fallback name if ACARA lookup fails</li>
+<li><strong>SKU:</strong> Must be a valid bundle SKU</li>
+<li><strong>Quantity:</strong> Numeric only (1-999)</li>
+<li><strong>Line_Funder:</strong> Optional (e.g., GM3, CSU, Airtrunk)</li>
+<li><strong>Session_Code:</strong> Optional (e.g., SESS-001)</li>
+<li><strong>Ship_Date, Carrier, Tracking:</strong> Optional</li>
+</ul>
+
+<div style="margin-top:12px;padding:12px;background:#dbeafe;border-radius:6px;font-size:13px;">
+<strong>💡 Grouping Logic:</strong> Multiple rows with the same Recipient_ACARA_Code will create ONE shipment with multiple line items.
+</div>
+</div>
+
+<div id="uploadResults" style="margin-top:20px;"></div>
+
+<div style="margin-top:20px;display:flex;gap:12px;justify-content:flex-end;">
+<button class="btn ghost" onclick="closeBulkUpload()">Cancel</button>
+</div>
+</div>
+</div>
+
+<script>
+// Sample data
+const SAMPLE_RECIPIENTS = [
+  // Schools
+  {
+    id: '001',
+    type: 'school',
+    name: 'Redfern Public School',
+    acara: '12345',
+    state: 'NSW',
+    mailingAddress: '123 Main St, Redfern NSW 2016',
+    deliveryStreet: '',
+    deliverySuburb: '',
+    deliveryState: '',
+    deliveryPostcode: '',
+    deliveryNotes: ''
+  },
+  {
+    id: '002',
+    type: 'school',
+    name: 'Dubbo College Senior Campus',
+    acara: '67890',
+    state: 'NSW',
+    mailingAddress: '456 College Rd, Dubbo NSW 2830',
+    deliveryStreet: '789 Depot St',
+    deliverySuburb: 'Dubbo',
+    deliveryState: 'NSW',
+    deliveryPostcode: '2830',
+    deliveryNotes: 'Use depot delivery - sign for Jenny'
+  },
+  {
+    id: '003',
+    type: 'school',
+    name: 'Alice Springs High School',
+    acara: '11223',
+    state: 'NT',
+    mailingAddress: 'PO Box 123, Alice Springs NT 0870',
+    deliveryStreet: '',
+    deliverySuburb: '',
+    deliveryState: '',
+    deliveryPostcode: '',
+    deliveryNotes: ''
+  },
+  {
+    id: '004',
+    type: 'school',
+    name: 'Broome Senior High School',
+    acara: '44556',
+    state: 'WA',
+    mailingAddress: 'Broome Hwy, Broome WA 6725',
+    deliveryStreet: 'Barge Depot, Wharf St',
+    deliverySuburb: 'Broome',
+    deliveryState: 'WA',
+    deliveryPostcode: '6725',
+    deliveryNotes: 'Barge delivery only - contact port authority'
+  },
+  // Organizations (non-schools)
+  {
+    id: '005',
+    type: 'organization',
+    name: 'Reiby Juvenile Justice Centre',
+    acara: 'JUVJUST-001',
+    state: 'NSW',
+    orgType: 'Juvenile Justice Facility',
+    mailingAddress: '191 Avoca St, Airds NSW 2560',
+    deliveryStreet: '',
+    deliverySuburb: '',
+    deliveryState: '',
+    deliveryPostcode: '',
+    deliveryNotes: 'Security clearance required - call ahead'
+  },
+  {
+    id: '006',
+    type: 'organization',
+    name: 'Dubbo Community Library',
+    acara: 'LIBRARY-001',
+    state: 'NSW',
+    orgType: 'Community Center',
+    mailingAddress: '117 Macquarie St, Dubbo NSW 2830',
+    deliveryStreet: '',
+    deliverySuburb: '',
+    deliveryState: '',
+    deliveryPostcode: '',
+    deliveryNotes: ''
+  },
+  {
+    id: '007',
+    type: 'organization',
+    name: 'Banksia Hill Detention Centre',
+    acara: 'JUVJUST-002',
+    state: 'WA',
+    orgType: 'Juvenile Justice Facility',
+    mailingAddress: '180 Stoneville Rd, Canning Vale WA 6155',
+    deliveryStreet: '',
+    deliverySuburb: '',
+    deliveryState: '',
+    deliveryPostcode: '',
+    deliveryNotes: 'Delivery to reception only'
+  }
+];
+
+// Bundle SKU list
+const BUNDLE_SKUS = [
+  { code: 'LEGO-JNR', name: 'LEGO Pack – Junior (4+)' },
+  { code: 'LEGO-PRI', name: 'LEGO Pack – Primary (6–8+)' },
+  { code: 'LEGO-ADV', name: 'LEGO Pack – Advanced (8–12+)' },
+  { code: 'STEM-MIX', name: 'Mixed STEM Kit' },
+  { code: 'BOOKS-STD', name: 'Standard Book Bundle' }
+];
+
+// Funder list
+const FUNDERS = [
+  { code: 'GM3', name: 'GM3 Foundation' },
+  { code: 'CSU', name: 'CSU Grant' },
+  { code: 'Airtrunk', name: 'Airtrunk' },
+  { code: 'BrianMDavis', name: 'Brian M Davis Foundation' },
+  { code: 'Waratah', name: 'Waratah' },
+  { code: 'WomenNSW', name: 'Women NSW' }
+];
+
+// State
+let selectedRecipient = null;
+let lineItemCounter = 0;
+let csvData = null;
+
+// Toggle Shopify stub
+function toggleShopifyStub() {
+  const content = document.getElementById('shopifyStubContent');
+  const icon = document.getElementById('shopifyIcon');
+  
+  if (content.style.display === 'none') {
+    content.style.display = 'block';
+    icon.classList.add('open');
+  } else {
+    content.style.display = 'none';
+    icon.classList.remove('open');
+  }
+}
+
+// Recipient search (unified: schools + organizations)
+let searchDebounce = null;
+function searchRecipient() {
+  clearTimeout(searchDebounce);
+  searchDebounce = setTimeout(() => {
+    const query = document.getElementById('recipientSearch').value.trim().toLowerCase();
+    const resultsDiv = document.getElementById('recipientResults');
+    
+    if (query.length < 2) {
+      resultsDiv.innerHTML = '';
+      return;
+    }
+    
+    const matches = SAMPLE_RECIPIENTS.filter(r => 
+      r.name.toLowerCase().includes(query) ||
+      r.acara.toLowerCase().includes(query)
+    );
+    
+    if (matches.length === 0) {
+      resultsDiv.innerHTML = '<div class="error" style="padding:8px;font-size:13px;">No recipients found. Try a different search term.</div>';
+      return;
+    }
+    
+    resultsDiv.innerHTML = matches.map(r => {
+      const icon = r.type === 'school' ? '📚' : '🏢';
+      const typeLabel = r.type === 'school' ? 'School' : r.orgType;
+      
+      return `<div style="padding:10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;margin-bottom:6px;cursor:pointer;transition:background 0.2s;" 
+           onclick='selectRecipient(${JSON.stringify(r).replace(/'/g, "&#39;")})' 
+           onmouseover="this.style.background='#e5e7eb'" 
+           onmouseout="this.style.background='#f9fafb'">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:20px;">${icon}</span>
+          <div style="flex:1;">
+            <strong>${r.name}</strong>
+            <div class="muted" style="font-size:12px;margin-top:2px;">
+              ${typeLabel} • ${r.state} • ID: ${r.acara}
+            </div>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }, 300);
+}
+
+function selectRecipient(recipient) {
+  selectedRecipient = recipient;
+  
+  const icon = recipient.type === 'school' ? '📚' : '🏢';
+  const typeLabel = recipient.type === 'school' ? 'School' : recipient.orgType;
+  
+  document.getElementById('selectedRecipient').innerHTML = `
+    <strong>✓ Selected:</strong> ${icon} ${recipient.name} <span class="muted">(${typeLabel}, ID: ${recipient.acara})</span>
+  `;
+  document.getElementById('selectedRecipient').style.display = 'block';
+  document.getElementById('recipientResults').innerHTML = '';
+  document.getElementById('recipientSearch').value = recipient.name;
+  
+  // Show address block
+  document.getElementById('addressBlock').style.display = 'block';
+  updateComputedAddress();
+}
+
+function updateComputedAddress() {
+  if (!selectedRecipient) return;
+  
+  const addressDiv = document.getElementById('computedAddress');
+  let address = '';
+  let source = '';
+  
+  // Priority 1: Alternate address
+  const useAlt = document.getElementById('useAltAddress').checked;
+  if (useAlt) {
+    const street = document.getElementById('altStreet').value;
+    const suburb = document.getElementById('altSuburb').value;
+    const state = document.getElementById('altState').value;
+    const postcode = document.getElementById('altPostcode').value;
+    
+    if (street && suburb && state && postcode) {
+      address = `${street}, ${suburb} ${state} ${postcode}`;
+      source = 'Alternate Address (one-time use)';
+    }
+  }
+  
+  // Priority 2: Saved delivery address
+  if (!address && selectedRecipient.deliveryStreet) {
+    address = `${selectedRecipient.deliveryStreet}, ${selectedRecipient.deliverySuburb} ${selectedRecipient.deliveryState} ${selectedRecipient.deliveryPostcode}`;
+    source = 'Saved Delivery Address';
+    if (selectedRecipient.deliveryNotes) {
+      address += `<br><em style="color:var(--muted);font-size:12px;">Note: ${selectedRecipient.deliveryNotes}</em>`;
+    }
+  }
+  
+  // Priority 3: Mailing address (fallback)
+  if (!address) {
+    address = selectedRecipient.mailingAddress;
+    source = 'Mailing Address (fallback)';
+  }
+  
+  addressDiv.innerHTML = `
+    <div style="font-size:14px;color:var(--charcoal);">${address}</div>
+    <div class="muted" style="margin-top:4px;font-size:12px;">Source: ${source}</div>
+  `;
+}
+
+function toggleAltAddress() {
+  const checked = document.getElementById('useAltAddress').checked;
+  document.getElementById('altAddressFields').style.display = checked ? 'block' : 'none';
+  
+  if (checked && selectedRecipient.deliveryStreet) {
+    document.getElementById('altStreet').value = selectedRecipient.deliveryStreet;
+    document.getElementById('altSuburb').value = selectedRecipient.deliverySuburb;
+    document.getElementById('altState').value = selectedRecipient.deliveryState;
+    document.getElementById('altPostcode').value = selectedRecipient.deliveryPostcode;
+  }
+  
+  updateComputedAddress();
+}
+
+// Header funder change: update existing line items
+function updateHeaderFunder() {
+  const headerFunder = document.getElementById('headerFunder').value;
+  
+  // Update all existing line items
+  const rows = document.querySelectorAll('#lineItemsBody tr');
+  for (const row of rows) {
+    if (row.querySelector('td[colspan="6"]')) continue; // Skip empty state
+    const funderSelect = row.querySelector('[data-field="funder"]');
+    if (funderSelect && funderSelect.value === '') {
+      funderSelect.value = headerFunder;
+    }
+  }
+}
+
+// Line items
+function addLineItem() {
+  lineItemCounter++;
+  const tbody = document.getElementById('lineItemsBody');
+  
+  // Remove empty state
+  if (tbody.querySelector('td[colspan="6"]')) {
+    tbody.innerHTML = '';
+  }
+  
+  const headerFunder = document.getElementById('headerFunder').value;
+  
+  const row = document.createElement('tr');
+  row.id = `line-${lineItemCounter}`;
+  row.innerHTML = `
+    <td>
+      <select class="line-item-input" data-field="sku" required>
+        <option value="">Select bundle...</option>
+        ${BUNDLE_SKUS.map(b => `<option value="${b.code}">${b.code} - ${b.name}</option>`).join('')}
+      </select>
+    </td>
+    <td>
+      <input type="number" class="line-item-input" data-field="qty" min="1" max="999" value="1" required>
+    </td>
+    <td>
+      <select class="line-item-input" data-field="uom">
+        <option value="pack">pack</option>
+        <option value="box">box</option>
+        <option value="unit">unit</option>
+      </select>
+    </td>
+    <td>
+      <select class="line-item-input" data-field="funder">
+        <option value="">No funder</option>
+        ${FUNDERS.map(f => `<option value="${f.code}" ${f.code === headerFunder ? 'selected' : ''}>${f.name}</option>`).join('')}
+      </select>
+    </td>
+    <td>
+      <input type="text" class="line-item-input" data-field="description" placeholder="Optional">
+    </td>
+    <td style="text-align:center;">
+      <button class="btn small danger" onclick="removeLineItem(${lineItemCounter})" title="Remove line">🗑️</button>
+    </td>
+  `;
+  
+  tbody.appendChild(row);
+}
+
+function removeLineItem(id) {
+  const row = document.getElementById(`line-${id}`);
+  if (row) row.remove();
+  
+  // Add empty state if no lines
+  const tbody = document.getElementById('lineItemsBody');
+  if (tbody.children.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="6" class="muted" style="text-align:center;padding:20px;">
+          Click "+ Add Line" to add products to this shipment
+        </td>
+      </tr>
+    `;
+  }
+}
+
+function getLineItems() {
+  const rows = document.querySelectorAll('#lineItemsBody tr');
+  const items = [];
+  
+  for (const row of rows) {
+    if (row.querySelector('td[colspan="6"]')) continue;
+    
+    const sku = row.querySelector('[data-field="sku"]').value;
+    const qty = row.querySelector('[data-field="qty"]').value;
+    const uom = row.querySelector('[data-field="uom"]').value;
+    const funder = row.querySelector('[data-field="funder"]').value;
+    const description = row.querySelector('[data-field="description"]').value;
+    
+    if (sku && qty) {
+      items.push({ sku, qty: parseInt(qty), uom, funder, description });
+    }
+  }
+  
+  return items;
+}
+
+// Save shipment
+function saveShipment(targetStatus) {
+  if (!selectedRecipient) {
+    alert('❌ Please select a recipient first');
+    return;
+  }
+  
+  const lines = getLineItems();
+  if (lines.length === 0) {
+    alert('❌ Please add at least one line item');
+    return;
+  }
+  
+  // Validate alternate address if used
+  const useAlt = document.getElementById('useAltAddress').checked;
+  if (useAlt) {
+    const street = document.getElementById('altStreet').value.trim();
+    const suburb = document.getElementById('altSuburb').value.trim();
+    const state = document.getElementById('altState').value;
+    const postcode = document.getElementById('altPostcode').value.trim();
+    
+    if (!street || !suburb || !state || !postcode) {
+      alert('❌ Please complete all alternate address fields');
+      return;
+    }
+  }
+  
+  // Status-specific validation
+  if (targetStatus === 'Dispatched') {
+    const shipDate = document.getElementById('shipDate').value;
+    const carrier = document.getElementById('carrier').value.trim();
+    const tracking = document.getElementById('trackingNumber').value.trim();
+    
+    if (!shipDate || !carrier || !tracking) {
+      alert('❌ Dispatched status requires Ship Date, Carrier, and Tracking Number');
+      return;
+    }
+  }
+  
+  if (targetStatus === 'Delivered') {
+    const shipDate = document.getElementById('shipDate').value;
+    if (!shipDate) {
+      alert('❌ Delivered status requires Ship Date');
+      return;
+    }
+  }
+  
+  // Build shipment object
+  const shipment = {
+    recipient: selectedRecipient,
+    sessionCode: document.getElementById('sessionCode').value,
+    headerFunder: document.getElementById('headerFunder').value,
+    status: targetStatus,
+    shipDate: document.getElementById('shipDate').value,
+    carrier: document.getElementById('carrier').value.trim(),
+    trackingNumber: document.getElementById('trackingNumber').value.trim(),
+    deliveryNotes: document.getElementById('deliveryNotes').value.trim(),
+    useAltAddress: useAlt,
+    altAddress: useAlt ? {
+      street: document.getElementById('altStreet').value.trim(),
+      suburb: document.getElementById('altSuburb').value.trim(),
+      state: document.getElementById('altState').value,
+      postcode: document.getElementById('altPostcode').value.trim()
+    } : null,
+    saveAsDefault: document.getElementById('saveAsDefault')?.checked || false,
+    lineItems: lines
+  };
+  
+  const icon = selectedRecipient.type === 'school' ? '📚' : '🏢';
+  const confirmMsg = `Create shipment with status "${targetStatus}"?
+
+${icon} Recipient: ${selectedRecipient.name}
+Line Items: ${lines.length}
+${shipment.saveAsDefault ? '\n⚠️ This will update the recipient\'s default delivery address' : ''}
+
+✉️ Auto-reminders will be sent at 24hr / 48hr / 72hr (CC coordinator)
+
+Proceed?`;
+  
+  if (!confirm(confirmMsg)) return;
+  
+  console.log('Shipment data:', shipment);
+  
+  alert(`✅ Shipment created successfully!
+
+In real system:
+• POST to Salesforce via Apex/LWC
+• Creates Shipment__c record (Status: ${targetStatus})
+• Creates ${lines.length} ShipmentLine__c record(s)
+• Links to ${selectedRecipient.type === 'school' ? 'School__c' : 'Organization__c'} (${selectedRecipient.acara})
+${shipment.saveAsDefault ? '• Updates recipient Delivery_* fields' : ''}
+• Schedules auto-reminders
+${targetStatus === 'Dispatched' ? '• Updates Shopify if order linked' : ''}`);
+  
+  resetForm();
+}
+
+function resetForm() {
+  selectedRecipient = null;
+  document.getElementById('recipientSearch').value = '';
+  document.getElementById('selectedRecipient').style.display = 'none';
+  document.getElementById('addressBlock').style.display = 'none';
+  document.getElementById('sessionCode').value = '';
+  document.getElementById('headerFunder').value = '';
+  document.getElementById('shipmentStatus').value = 'Draft';
+  document.getElementById('shipDate').value = '';
+  document.getElementById('carrier').value = '';
+  document.getElementById('trackingNumber').value = '';
+  document.getElementById('deliveryNotes').value = '';
+  document.getElementById('useAltAddress').checked = false;
+  document.getElementById('altAddressFields').style.display = 'none';
+  document.getElementById('altStreet').value = '';
+  document.getElementById('altSuburb').value = '';
+  document.getElementById('altState').value = '';
+  document.getElementById('altPostcode').value = '';
+  
+  document.getElementById('lineItemsBody').innerHTML = `
+    <tr>
+      <td colspan="6" class="muted" style="text-align:center;padding:20px;">
+        Click "+ Add Line" to add products to this shipment
+      </td>
+    </tr>
+  `;
+}
+
+// Bulk upload
+function openBulkUpload() {
+  document.getElementById('bulkUploadModal').classList.add('active');
+}
+
+function closeBulkUpload() {
+  document.getElementById('bulkUploadModal').classList.remove('active');
+  document.getElementById('csvFile').value = '';
+  document.getElementById('uploadResults').innerHTML = '';
+}
+
+function downloadCSVTemplate() {
+  const csv = `Recipient_ACARA_Code,Recipient_Name,SKU,Quantity,Line_Funder,Session_Code,Ship_Date,Carrier,Tracking
+12345,Redfern PS,LEGO-PRI,5,GM3,SESS-001,2025-11-15,Australia Post,AP12345AU
+12345,Redfern PS,BOOKS-STD,10,CSU,SESS-001,2025-11-15,Australia Post,AP12345AU
+67890,Dubbo College,STEM-MIX,3,,SESS-002,,,
+JUVJUST-001,Reiby JJ,LEGO-ADV,2,Airtrunk,SESS-005,2025-11-20,DHL,DHL67890
+44556,Broome HS,LEGO-JNR,8,,,2025-11-22,Sendle,`;
+  
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'shipments_bulk_import_template.csv';
+  a.click();
+  window.URL.revokeObjectURL(url);
+}
+
+function processCSV() {
+  const file = document.getElementById('csvFile').files[0];
+  if (!file) {
+    alert('❌ Please select a CSV file');
+    return;
+  }
+  
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const text = e.target.result;
+    const lines = text.split('\n').filter(l => l.trim());
+    
+    if (lines.length < 2) {
+      alert('❌ CSV file is empty or invalid');
+      return;
+    }
+    
+    const rows = [];
+    const errors = [];
+    
+    for (let i = 1; i < lines.length; i++) {
+      const cols = lines[i].split(',').map(c => c.trim());
+      
+      const acara = cols[0];
+      const recipientName = cols[1];
+      const sku = cols[2];
+      const qty = cols[3];
+      const funder = cols[4] || '';
+      const session = cols[5] || '';
+      const shipDate = cols[6] || '';
+      const carrier = cols[7] || '';
+      const tracking = cols[8] || '';
+      
+      // Validation
+      if (!acara) {
+        errors.push(`Row ${i + 1}: Missing recipient ACARA code`);
+        continue;
+      }
+      
+      if (!sku) {
+        errors.push(`Row ${i + 1}: Missing SKU`);
+        continue;
+      }
+      
+      if (!BUNDLE_SKUS.find(b => b.code === sku)) {
+        errors.push(`Row ${i + 1}: Invalid SKU "${sku}" (must be valid bundle SKU)`);
+        continue;
+      }
+      
+      if (!qty || isNaN(qty) || parseInt(qty) < 1) {
+        errors.push(`Row ${i + 1}: Invalid quantity "${qty}"`);
+        continue;
+      }
+      
+      // Check recipient exists
+      const recipient = SAMPLE_RECIPIENTS.find(r => r.acara === acara);
+      if (!recipient) {
+        errors.push(`Row ${i + 1}: Recipient ID "${acara}" not found in database`);
+        continue;
+      }
+      
+      rows.push({
+        rowNum: i + 1,
+        acara,
+        recipient,
+        sku,
+        qty: parseInt(qty),
+        funder,
+        session,
+        shipDate,
+        carrier,
+        tracking
+      });
+    }
+    
+    // Group by recipient
+    const shipments = {};
+    for (const row of rows) {
+      if (!shipments[row.acara]) {
+        shipments[row.acara] = {
+          recipient: row.recipient,
+          session: row.session,
+          shipDate: row.shipDate,
+          carrier: row.carrier,
+          tracking: row.tracking,
+          lines: []
+        };
+      }
+      
+      shipments[row.acara].lines.push({
+        sku: row.sku,
+        qty: row.qty,
+        funder: row.funder
+      });
+    }
+    
+    csvData = shipments;
+    
+    // Display results with SUMMARY
+    const resultsDiv = document.getElementById('uploadResults');
+    let html = '';
+    
+    const shipmentCount = Object.keys(shipments).length;
+    const lineCount = rows.length;
+    const errorCount = errors.length;
+    
+    // SUMMARY BOX
+    html += '<div class="card" style="background:#f9fafb;border:2px solid #3b82f6;">';
+    html += '<h3 style="margin:0 0 12px 0;">📊 Import Summary</h3>';
+    html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;">';
+    html += `<div style="text-align:center;padding:12px;background:#fff;border-radius:8px;">
+      <div style="font-size:32px;font-weight:700;color:#0a7d57;">${shipmentCount}</div>
+      <div class="muted">Shipments</div>
+    </div>`;
+    html += `<div style="text-align:center;padding:12px;background:#fff;border-radius:8px;">
+      <div style="font-size:32px;font-weight:700;color:#3b82f6;">${lineCount}</div>
+      <div class="muted">Line Items</div>
+    </div>`;
+    html += `<div style="text-align:center;padding:12px;background:#fff;border-radius:8px;">
+      <div style="font-size:32px;font-weight:700;color:${errorCount > 0 ? '#c62828' : '#6b7280'};">${errorCount}</div>
+      <div class="muted">Errors</div>
+    </div>`;
+    html += '</div>';
+    
+    if (shipmentCount > 0) {
+      html += '<div class="success">';
+      html += `<strong>✅ ${lineCount} line(s) validated successfully</strong><br>`;
+      html += '<div style="margin-top:12px;font-size:13px;">';
+      
+      for (const [acara, shipment] of Object.entries(shipments)) {
+        const icon = shipment.recipient.type === 'school' ? '📚' : '🏢';
+        html += `<div style="margin-top:8px;padding:8px;background:#fff;border-radius:6px;">`;
+        html += `${icon} <strong>${shipment.recipient.name}</strong> (${acara})<br>`;
+        html += `<span class="muted">${shipment.lines.length} line item(s)</span>`;
+        html += '</div>';
+      }
+      
+      html += '</div>';
+      html += '<button class="btn primary" onclick="confirmBulkImport()" style="margin-top:16px;">✅ Confirm & Import</button>';
+      html += '</div>';
+    }
+    
+    if (errorCount > 0) {
+      html += '<div class="error" style="margin-top:12px;">';
+      html += `<strong>❌ ${errorCount} error(s) found</strong>`;
+      html += '<ul style="margin:8px 0 0 20px;font-size:13px;">';
+      errors.forEach(err => html += `<li>${err}</li>`);
+      html += '</ul></div>';
+    }
+    
+    html += '</div>';
+    
+    resultsDiv.innerHTML = html;
+  };
+  
+  reader.readAsText(file);
+}
+
+function confirmBulkImport() {
+  if (!csvData) return;
+  
+  const shipmentCount = Object.keys(csvData).length;
+  const lineCount = Object.values(csvData).reduce((sum, s) => sum + s.lines.length, 0);
+  
+  if (!confirm(`Import ${shipmentCount} shipment(s) with ${lineCount} total line items?
+
+✉️ All shipments will have auto-reminders:
+• 24hr
+• 48hr
+• 72hr (final, CC coordinator)
+
+Proceed?`)) {
+    return;
+  }
+  
+  console.log('Bulk import data:', csvData);
+  
+  // FINAL SUMMARY AFTER IMPORT
+  const resultsDiv = document.getElementById('uploadResults');
+  resultsDiv.innerHTML = `
+    <div class="success" style="margin-top:16px;">
+      <h3 style="margin:0 0 12px 0;">✅ Bulk Import Complete!</h3>
+      
+      <div style="font-size:15px;margin-top:12px;">
+        <strong>Summary:</strong><br>
+        • <strong>${shipmentCount}</strong> shipments created<br>
+        • <strong>${lineCount}</strong> line items created<br>
+        • <strong>0</strong> errors
+      </div>
+      
+      <div style="margin-top:12px;padding:12px;background:#fff;border-radius:6px;font-size:13px;">
+        <strong>In real system:</strong><br>
+        • Bulk POST to Salesforce via Apex<br>
+        • Creates all Shipment__c records with Status = Draft<br>
+        • Creates all ShipmentLine__c records<br>
+        • Links to School__c / Organization__c records<br>
+        • Schedules auto-reminders for each shipment
+      </div>
+    </div>
+  `;
+  
+  document.getElementById('csvFile').value = '';
+  csvData = null;
+}
+</script>
+
+</body>
+</html>
