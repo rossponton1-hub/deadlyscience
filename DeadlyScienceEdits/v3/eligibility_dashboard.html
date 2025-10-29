@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Eligibility Dashboard – DeadlyScience v3</title>
+  <style>
+    :root {--ink:#0f172a;--charcoal:#1f2937;--muted:#6b7280;--bg:#f1f5f9;--white:#ffffff;--line:#e2e8f0;--emerald:#047857;--sky:#0ea5e9;--violet:#6366f1;}
+    body {margin:0;font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--charcoal);} 
+    header {background:var(--white);border-bottom:1px solid var(--line);padding:24px;} 
+    main {padding:24px;max-width:1200px;margin:0 auto;} 
+    h1 {margin:0;font-size:30px;font-weight:800;color:var(--ink);} 
+    p.lead {color:var(--muted);margin:4px 0 0 0;} 
+    .card {background:var(--white);border:1px solid var(--line);border-radius:22px;padding:24px;margin-bottom:24px;box-shadow:0 14px 34px rgba(15,23,42,0.08);} 
+    label {font-weight:600;color:var(--ink);display:flex;align-items:center;gap:6px;} 
+    select,input {width:100%;padding:12px;border-radius:14px;border:1px solid var(--line);font-size:14px;} 
+    .filter-layout {display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;} 
+    .school-grid {display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;} 
+    .school-card {border:1px solid var(--line);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:8px;} 
+    .school-card strong {font-size:18px;color:var(--ink);} 
+    .status-chip {display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;border:1px solid var(--line);font-size:12px;font-weight:600;} 
+    .tone-success {background:rgba(4,120,87,0.12);border-color:rgba(4,120,87,0.3);} 
+    .tone-info {background:rgba(14,165,233,0.12);border-color:rgba(14,165,233,0.3);} 
+    .tone-warn {background:rgba(99,102,241,0.12);border-color:rgba(99,102,241,0.3);} 
+    .tooltip {position:relative;display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--ink);color:#fff;font-size:11px;cursor:help;} 
+    .tooltip::after {content:attr(data-tooltip);position:absolute;left:50%;transform:translate(-50%,12px);bottom:-4px;background:var(--ink);color:#fff;padding:8px 12px;border-radius:8px;font-size:12px;line-height:1.3;width:240px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:20;} 
+    .tooltip:hover::after {opacity:1;} 
+    .filter-shell {background:var(--white);border:1px solid var(--line);border-radius:20px;padding:16px;margin:16px 0;box-shadow:0 6px 18px rgba(15,23,42,0.08);} 
+    .filter-heading {display:flex;align-items:center;gap:8px;font-weight:600;margin-bottom:12px;color:var(--ink);} 
+    .chip-row {display:flex;flex-wrap:wrap;gap:8px;} 
+    .chip {display:inline-flex;align-items:center;gap:6px;background:rgba(14,165,233,0.12);border-radius:999px;padding:6px 14px;font-weight:600;font-size:13px;color:var(--sky);} 
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Eligibility Dashboard</h1>
+    <p class="lead">Apply consistent filters shared with the Impact Dashboard to confirm school prioritisation.</p>
+  </header>
+  <main>
+    <section id="UniversalFilters"></section>
+
+    <article class="card">
+      <h2 style="margin-top:0;">Filters</h2>
+      <div class="filter-layout">
+        <div>
+          <label>Program_History__c <span class="tooltip" data-tooltip="Matches Impact Dashboard program codes for consistent segmentation.">ⓘ</span></label>
+          <select id="ProgramHistory"></select>
+        </div>
+        <div>
+          <label>Grant_Preset__c</label>
+          <select id="GrantPreset"></select>
+        </div>
+        <div>
+          <label>Eligibility_Status__c <span class="tooltip" data-tooltip="Eligible | Conditional | Not Eligible mirror School Lookup chips.">ⓘ</span></label>
+          <select id="EligibilityStatus">
+            <option value="All">All</option>
+            <option value="Eligible">Eligible</option>
+            <option value="Conditional">Conditional</option>
+            <option value="Not Eligible">Not Eligible</option>
+          </select>
+        </div>
+        <div>
+          <label>State__c</label>
+          <input type="text" placeholder="NSW, QLD, NT…" />
+        </div>
+      </div>
+      <div style="margin-top:16px;">
+        <label>Targeting Tags</label>
+        <div class="chip-row" id="TargetTags"></div>
+      </div>
+    </article>
+
+    <article class="card">
+      <h2 style="margin-top:0;">Recommended Schools</h2>
+      <div class="school-grid" id="EligibilityGrid"></div>
+    </article>
+  </main>
+
+  <script src="config/universal.js"></script>
+  <script>
+    const eligibilityRecords = [
+      {school:'Walgett Community College', status:'Eligible', program:'DeadlyLabs', grant:'CSIRO', profile:'High ATSI participation', dispatch:'Linked via Session DS-203'},
+      {school:'Aurukun State School', status:'Conditional', program:'MarineScience', grant:'BHPFoundation', profile:'Awaiting principal approval', dispatch:'Not linked'},
+      {school:'Port Augusta Secondary School', status:'Not Eligible', program:'Robotics', grant:'Unattributed', profile:'Exceeded annual allocation', dispatch:'Linked via Session DS-189'}
+    ];
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const cfg = await renderUniversalDateFilter('UniversalFilters');
+      buildFilters(cfg);
+      renderTargetTags(cfg);
+      renderEligibilityCards();
+    });
+
+    function buildFilters(cfg) {
+      const programSelect = document.getElementById('ProgramHistory');
+      ['All'].concat(cfg.programCodes).forEach(code => {
+        const opt = document.createElement('option');
+        opt.value = code;
+        opt.textContent = code;
+        programSelect.appendChild(opt);
+      });
+
+      const grantSelect = document.getElementById('GrantPreset');
+      ['All'].concat(cfg.grantCodes).forEach(code => {
+        const opt = document.createElement('option');
+        opt.value = code;
+        opt.textContent = code;
+        grantSelect.appendChild(opt);
+      });
+    }
+
+    function renderTargetTags(cfg) {
+      const tagRow = document.getElementById('TargetTags');
+      tagRow.innerHTML = '';
+      cfg.atsipctThresholds.forEach(range => {
+        const chip = document.createElement('span');
+        chip.className = 'chip';
+        chip.textContent = `ATSI ${range.label}`;
+        chip.appendChild(buildTooltipIcon('Eligibility weightings use the same thresholds as reporting.'));
+        tagRow.appendChild(chip);
+      });
+      ['Remote', 'Regional', 'Metropolitan'].forEach(tag => {
+        const chip = document.createElement('span');
+        chip.className = 'chip';
+        chip.textContent = tag;
+        chip.appendChild(buildTooltipIcon('Aligned to PMM Service Territory picklist.'));
+        tagRow.appendChild(chip);
+      });
+    }
+
+    function renderEligibilityCards() {
+      const grid = document.getElementById('EligibilityGrid');
+      grid.innerHTML = '';
+      eligibilityRecords.forEach(record => {
+        const card = document.createElement('div');
+        card.className = 'school-card';
+        const title = document.createElement('strong');
+        title.textContent = record.school;
+        const chipRow = document.createElement('div');
+        chipRow.style.display = 'flex';
+        chipRow.style.flexWrap = 'wrap';
+        chipRow.style.gap = '8px';
+        chipRow.appendChild(createStatusChip(record.status, 'Eligibility status determined via scoring matrix.', record.status === 'Eligible' ? 'success' : 'warn'));
+        chipRow.appendChild(createStatusChip(record.program, 'Program history uses canonical casing shared with Impact Dashboard.', 'info'));
+        chipRow.appendChild(createStatusChip(`Dispatch: ${record.dispatch}`, 'Read-only linkage to Shopify shipments via Session_Code.', 'info'));
+        const body = document.createElement('p');
+        body.style.margin = '0';
+        body.style.color = 'var(--muted)';
+        body.style.fontSize = '13px';
+        body.textContent = `${record.profile} • Grant: ${record.grant}`;
+        card.appendChild(title);
+        card.appendChild(chipRow);
+        card.appendChild(body);
+        grid.appendChild(card);
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Session Setup – DeadlyScience v3</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <style>
+    :root {
+      --ink:#0f172a;
+      --charcoal:#1f2937;
+      --muted:#6b7280;
+      --line:#e5e7eb;
+      --emerald:#047857;
+      --sky:#0ea5e9;
+      --amber:#f59e0b;
+      --rose:#dc2626;
+      --bg:#f9fafb;
+      --white:#ffffff;
+    }
+    body {font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;margin:0;background:var(--bg);color:var(--charcoal);} 
+    header {background:var(--white);border-bottom:1px solid var(--line);padding:24px;} 
+    main {padding:24px;max-width:1000px;margin:0 auto;} 
+    h1 {margin:0 0 4px 0;font-size:28px;font-weight:700;color:var(--ink);} 
+    p.lead {margin:0;color:var(--muted);} 
+    .card {background:var(--white);border:1px solid var(--line);border-radius:16px;padding:24px;margin-bottom:24px;box-shadow:0 8px 24px rgba(15,23,42,0.05);} 
+    label {display:flex;gap:8px;align-items:center;font-weight:600;color:var(--ink);margin-top:16px;} 
+    input,select,textarea {width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);font-size:15px;transition:border-color .2s;} 
+    textarea {min-height:120px;} 
+    input:focus,select:focus,textarea:focus {outline:none;border-color:var(--sky);box-shadow:0 0 0 3px rgba(14,165,233,0.15);} 
+    .grid {display:grid;gap:16px;} 
+    .cols-2 {grid-template-columns:repeat(auto-fit,minmax(240px,1fr));} 
+    .status-grid {display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;} 
+    .status-chip {display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:6px 12px;font-size:12px;font-weight:600;background:var(--bg);border:1px solid var(--line);} 
+    .tone-success {background:rgba(5,150,105,0.12);border-color:rgba(5,150,105,0.3);} 
+    .tone-warn {background:rgba(245,158,11,0.12);border-color:rgba(245,158,11,0.3);} 
+    .tone-danger {background:rgba(220,38,38,0.12);border-color:rgba(220,38,38,0.3);} 
+    .tooltip {position:relative;display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--ink);color:#fff;font-size:11px;cursor:help;} 
+    .tooltip::after {content:attr(data-tooltip);position:absolute;left:50%;transform:translate(-50%,12px);bottom:-4px;background:var(--ink);color:#fff;padding:8px 12px;border-radius:8px;font-size:12px;line-height:1.3;width:220px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:20;} 
+    .tooltip:hover::after {opacity:1;} 
+    .filter-shell {background:var(--white);border:1px solid var(--line);border-radius:16px;padding:16px;margin-top:16px;box-shadow:0 4px 12px rgba(15,23,42,0.05);} 
+    .filter-heading {display:flex;align-items:center;gap:8px;font-weight:600;margin-bottom:12px;color:var(--ink);} 
+    .chip-row {display:flex;flex-wrap:wrap;gap:8px;} 
+    .chip {display:inline-flex;align-items:center;gap:6px;background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-weight:600;font-size:13px;color:var(--charcoal);cursor:pointer;} 
+    .chip.active {background:var(--sky);color:#fff;border-color:var(--sky);} 
+    .custom-range {display:none;margin-top:12px;} 
+    .custom-range.active {display:block;} 
+    .custom-inputs {display:flex;gap:12px;flex-wrap:wrap;} 
+    .tag-row {display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;} 
+    .tag {background:rgba(14,165,233,0.12);color:var(--sky);border-radius:999px;padding:4px 10px;font-size:12px;font-weight:600;} 
+    button.primary {margin-top:24px;background:var(--emerald);color:#fff;border:0;border-radius:12px;padding:14px 20px;font-size:16px;font-weight:600;cursor:pointer;} 
+    .inline {display:flex;gap:12px;flex-wrap:wrap;} 
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Session Setup</h1>
+    <p class="lead">Create and maintain Session__c records with canonical Salesforce picklists and shared presets.</p>
+  </header>
+  <main>
+    <section id="UniversalFilters"></section>
+
+    <article class="card">
+      <h2 style="margin-top:0;">Session Details</h2>
+      <div class="grid cols-2">
+        <div>
+          <label>Session__c.Status__c <span id="SessionStatusInfo"></span></label>
+          <select id="SessionStatusField"></select>
+        </div>
+        <div>
+          <label>Delivery_Type__c <span class="tooltip" data-tooltip="Delivery modes are limited to In_Person or Virtual across the org.">ⓘ</span></label>
+          <select id="DeliveryTypeField"></select>
+        </div>
+        <div>
+          <label>Session_Date__c</label>
+          <input type="date" />
+        </div>
+        <div>
+          <label>Program_Code__c</label>
+          <select id="ProgramCodeField"></select>
+        </div>
+        <div>
+          <label>Grant_Code__c</label>
+          <select id="GrantCodeField"></select>
+        </div>
+        <div>
+          <label>Presenter__c</label>
+          <input type="text" placeholder="Search presenters..." />
+        </div>
+      </div>
+      <label>Session_Notes__c</label>
+      <textarea placeholder="Context for presenters, logistics notes, funder obligations"></textarea>
+    </article>
+
+    <article class="card">
+      <h2 style="margin-top:0;">Schools &amp; Outcomes</h2>
+      <p class="lead" style="margin-bottom:16px;">Multi-school delivery captured through Session_School__c with shared status + demographic schema.</p>
+      <div class="status-grid" id="SchoolStatusChips"></div>
+      <div class="grid cols-2" style="margin-top:16px;">
+        <div>
+          <label>Expected_Attendance__c</label>
+          <input type="number" placeholder="Total_Students__c" />
+        </div>
+        <div>
+          <label>Year_Levels__c <span class="tooltip" data-tooltip="NSW-aligned Year Levels from config.yearLevels.">ⓘ</span></label>
+          <input type="text" placeholder="e.g. 5;6" />
+        </div>
+        <div>
+          <label>Demographics_Status__c <span id="DemographicsStatusInfo"></span></label>
+          <select id="DemographicsStatusField"></select>
+        </div>
+        <div>
+          <label>Demographics_Source__c <span class="tooltip" data-tooltip="Default source is Presenter for in-person, Teacher_Link for virtual.">ⓘ</span></label>
+          <select>
+            <option value="Presenter">Presenter</option>
+            <option value="Teacher_Link">Teacher_Link</option>
+          </select>
+        </div>
+      </div>
+    </article>
+
+    <article class="card">
+      <h2 style="margin-top:0;">Reminders</h2>
+      <p class="lead">Automated reminders trigger at T+1 day and T+3 days unless Demographics_Status__c is Submitted or Wont_Submit.</p>
+      <div class="tag-row" id="ReminderTags"></div>
+      <div class="inline">
+        <label style="margin:0;">Reminder_Copy__c</label>
+        <textarea placeholder="Hi {TeacherName}, thanks for the session yesterday. Please submit the demographics form when ready."></textarea>
+      </div>
+    </article>
+
+    <button type="button" class="primary">Save Session__c Draft</button>
+  </main>
+
+  <script src="config/universal.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const cfg = await renderUniversalDateFilter('UniversalFilters');
+
+      const sessionStatusInfo = document.getElementById('SessionStatusInfo');
+      sessionStatusInfo.appendChild(createStatusChip('Lifecycle', 'Session__c.Status__c options: ' + cfg.sessionStatus.join(', '), 'success'));
+
+      const statusField = document.getElementById('SessionStatusField');
+      cfg.sessionStatus.forEach(value => {
+        const opt = document.createElement('option');
+        opt.value = value;
+        opt.textContent = value;
+        statusField.appendChild(opt);
+      });
+      statusField.value = 'Planned';
+
+      const deliveryField = document.getElementById('DeliveryTypeField');
+      cfg.deliveryTypes.forEach(value => {
+        const opt = document.createElement('option');
+        opt.value = value;
+        opt.textContent = value.replace('_', ' ');
+        deliveryField.appendChild(opt);
+      });
+      deliveryField.value = 'In_Person';
+
+      const programField = document.getElementById('ProgramCodeField');
+      cfg.programCodes.forEach(code => {
+        const opt = document.createElement('option');
+        opt.value = code;
+        opt.textContent = code;
+        programField.appendChild(opt);
+      });
+
+      const grantField = document.getElementById('GrantCodeField');
+      cfg.grantCodes.forEach(code => {
+        const opt = document.createElement('option');
+        opt.value = code;
+        opt.textContent = code;
+        grantField.appendChild(opt);
+      });
+
+      const demographicsInfo = document.getElementById('DemographicsStatusInfo');
+      demographicsInfo.appendChild(createStatusChip('Submission', 'Demographics_Status__c shared across delivery modes.', 'warn'));
+
+      const demoField = document.getElementById('DemographicsStatusField');
+      cfg.demographicsStatus.forEach(value => {
+        const opt = document.createElement('option');
+        opt.value = value;
+        opt.textContent = value.replace('_', ' ');
+        demoField.appendChild(opt);
+      });
+      demoField.value = 'Pending';
+
+      const schoolStatusChips = document.getElementById('SchoolStatusChips');
+      cfg.sessionSchoolStatus.forEach(value => {
+        const chip = createStatusChip(value, 'Session_School__c.Status__c available for both in-person and virtual closures.', value === 'Delivered' ? 'success' : value === 'Cancelled' ? 'danger' : 'warn');
+        schoolStatusChips.appendChild(chip);
+      });
+
+      const reminderTags = document.getElementById('ReminderTags');
+      cfg.reminderSchedule.forEach(step => {
+        const tag = document.createElement('span');
+        tag.className = 'tag';
+        tag.textContent = step;
+        reminderTags.appendChild(tag);
+      });
+    });
+  </script>
+</body>
+</html>
