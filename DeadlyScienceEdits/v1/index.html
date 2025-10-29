@@ -1,0 +1,102 @@
+<!doctype html><html lang='en-AU'><head><meta charset='utf-8'/><meta name='viewport' content='width=device-width, initial-scale=1'/><title>DeadlyScience Salesforce MVP</title>
+<style>
+:root{--ink:#111827;--charcoal:#1f2937;--muted:#6b7280;--bg:#f5f7fa;--white:#fff;--line:#e5e7eb;--ds-red:#c62828;--ds-red-hover:#d32f2f;--green:#0a7d57}
+*{box-sizing:border-box}
+body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;background:var(--bg);color:var(--charcoal);line-height:1.6}
+a{color:var(--charcoal);text-decoration:none}
+.wrap{max-width:1100px;margin:0 auto;padding:16px}
+.card{background:var(--white);border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:20px}
+.card h3{color:var(--ds-red);font-size:18px;font-weight:600;margin:0 0 12px 0}
+.btn{display:inline-block;background:var(--white);color:var(--charcoal);padding:14px;border-radius:10px;border:2px solid var(--line);cursor:pointer;font-size:15px;transition:all 0.2s;width:100%;text-align:left}
+.btn:hover{border-color:var(--ds-red-hover);background:#fafafa;transform:translateY(-1px)}
+.btn strong{color:var(--ds-red);font-size:16px;font-weight:600}
+.muted{color:var(--muted);font-size:14px}
+header{position:sticky;top:0;z-index:50;background:linear-gradient(135deg,#8b1f1f 0%,#6d1818 100%);border-bottom:0;color:#fff;padding:24px 0;box-shadow:0 2px 4px rgba(0,0,0,0.1)}
+header strong{font-size:24px;letter-spacing:-0.5px}
+footer{color:var(--muted);padding:24px 0;text-align:center;border-top:1px solid var(--line);margin-top:40px}
+</style>
+</head><body>
+<header>
+<div class="wrap" style="display:flex;align-items:center;justify-content:space-between;">
+<strong>DeadlyScience Salesforce MVP</strong>
+</div>
+</header>
+<main class='wrap' style='padding-top:16px;'>
+<h1 style="margin:0 0 20px 0;">Session & Operations Management</h1>
+
+<div class="card">
+<h3>🔍 Navigation</h3>
+<div style="display:flex;flex-direction:column;gap:12px;">
+<a class="btn" href="sessions.html">
+<strong style="display:block;margin-bottom:4px;">Session Finder</strong>
+<span class="muted" style="font-weight:normal;">Browse recent sessions • Navigate to delivery pages (prototype demo)</span>
+</a>
+</div>
+</div>
+
+<div class="card">
+<h3>📋 Planning</h3>
+<div style="display:flex;flex-direction:column;gap:12px;">
+<a class="btn" href="session_setup.html">
+<strong style="display:block;margin-bottom:4px;">Create / Plan Session</strong>
+<span class="muted" style="font-weight:normal;">Set up sessions, add schools and contacts, link to grants</span>
+</a>
+</div>
+</div>
+
+<div class="card">
+<h3>🎯 Delivery</h3>
+<div style="display:flex;flex-direction:column;gap:12px;">
+<a class="btn" href="deliver_session.html">
+<strong style="display:block;margin-bottom:4px;">Deliver Session</strong>
+<span class="muted" style="font-weight:normal;">Multi-school picker • Demographics entry • Survey triggers • QR full screen</span>
+</a>
+<a class="btn" href="deliver_virtual.html">
+<strong style="display:block;margin-bottom:4px;">Deliver Virtual Session</strong>
+<span class="muted" style="font-weight:normal;">Send demographics links to teachers • Track submissions</span>
+</a>
+</div>
+</div>
+
+<div class="card">
+<h3>📦 Shipping & Operations</h3>
+<div style="display:flex;flex-direction:column;gap:12px;">
+<a class="btn" href="school_request_form.html">
+<strong style="display:block;margin-bottom:4px;">School Kit Request Form</strong>
+<span class="muted" style="font-weight:normal;">Public form for schools to request resources</span>
+</a>
+<a class="btn" href="resource_dispatch.html">
+<strong style="display:block;margin-bottom:4px;">Create Shipment</strong>
+<span class="muted" style="font-weight:normal;">Track resource dispatch with grant linking</span>
+</a>
+<a class="btn" href="school_lookup.html">
+<strong style="display:block;margin-bottom:4px;">School Lookup Tool</strong>
+<span class="muted" style="font-weight:normal;">Search ACARA schools for codes and details</span>
+</a>
+</div>
+</div>
+
+<div class="card">
+<h3>📊 Reporting & Data Quality</h3>
+<div style="display:flex;flex-direction:column;gap:12px;">
+<a class="btn" href="impact_dashboard.html">
+<strong style="display:block;margin-bottom:4px;">Impact Dashboard</strong>
+<span class="muted" style="font-weight:normal;">Programme reach, student demographics, grant utilisation</span>
+</a>
+<a class="btn" href="eligibility_dashboard.html">
+<strong style="display:block;margin-bottom:4px;">Eligibility Dashboard</strong>
+<span class="muted" style="font-weight:normal;">School eligibility by ICSEA, ATSI%, and location • Grant compliance tracking</span>
+</a>
+<a class="btn" href="data_completeness.html">
+<strong style="display:block;margin-bottom:4px;">Data Completeness</strong>
+<span class="muted" style="font-weight:normal;">Sessions missing demographics, survey completion, presenter compliance</span>
+</a>
+</div>
+</div>
+
+</main>
+<footer class='wrap'>
+<p style="margin:0 0 8px 0;">DeadlyScience Salesforce MVP • October 2025</p>
+<p style="margin:0;font-size:13px;">Interactive prototype for implementation reference</p>
+</footer>
+</body></html>
