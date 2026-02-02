@@ -105,6 +105,17 @@ header strong{font-size:24px;letter-spacing:-0.5px}
     <input type="text" id="text-search" class="search-box" placeholder="Search by school, facilitator, or funder..." style="opacity:1;cursor:text;" />
   </div>
 
+  <div class="filter-group">
+    <label class="filter-label">Sort by</label>
+    <select id="sort-select" onchange="setSort(this.value)" style="padding:8px 12px;border:1px solid #e5e7eb;border-radius:6px;background:#fff;font-size:14px;cursor:pointer;">
+      <option value="date-desc" selected>Date (Newest first)</option>
+      <option value="date-asc">Date (Oldest first)</option>
+      <option value="title">Title (A-Z)</option>
+      <option value="status">Status</option>
+      <option value="mode">Mode</option>
+    </select>
+  </div>
+
   <div style="margin-top:12px;text-align:right;">
     <span class="reset-link" id="reset-filters">Reset filters</span>
   </div>
@@ -257,6 +268,43 @@ let filters = {
   text: ''
 };
 
+// Current sort state
+let sortBy = 'date-desc'; // 'date-desc', 'date-asc', 'title', 'status', 'mode'
+
+// Sort session cards
+function sortSessions() {
+  const sessionList = document.getElementById('session-list');
+  const cards = Array.from(sessionList.querySelectorAll('.session-card'));
+
+  cards.sort((a, b) => {
+    switch (sortBy) {
+      case 'date-desc':
+        return new Date(b.dataset.date) - new Date(a.dataset.date);
+      case 'date-asc':
+        return new Date(a.dataset.date) - new Date(b.dataset.date);
+      case 'title':
+        const titleA = a.querySelector('.session-title')?.textContent || '';
+        const titleB = b.querySelector('.session-title')?.textContent || '';
+        return titleA.localeCompare(titleB);
+      case 'status':
+        const statusOrder = { 'complete': 0, 'awaiting': 1, 'incomplete': 2 };
+        return (statusOrder[a.dataset.status] || 3) - (statusOrder[b.dataset.status] || 3);
+      case 'mode':
+        return (a.dataset.mode || '').localeCompare(b.dataset.mode || '');
+      default:
+        return 0;
+    }
+  });
+
+  // Re-append sorted cards
+  cards.forEach(card => sessionList.appendChild(card));
+}
+
+function setSort(newSort) {
+  sortBy = newSort;
+  sortSessions();
+}
+
 // Get today's date for time filtering
 const today = new Date();
 const thisYear = today.getFullYear();
@@ -368,7 +416,7 @@ function resetFilters() {
     mode: 'all',
     text: ''
   };
-  
+
   // Reset chip active states
   document.querySelectorAll('.filter-chip').forEach(chip => {
     chip.classList.remove('active');
@@ -376,10 +424,15 @@ function resetFilters() {
       chip.classList.add('active');
     }
   });
-  
+
   // Reset text search
   document.getElementById('text-search').value = '';
-  
+
+  // Reset sort
+  sortBy = 'date-desc';
+  document.getElementById('sort-select').value = 'date-desc';
+  sortSessions();
+
   // Apply filters (shows all)
   applyFilters();
 }
@@ -390,15 +443,16 @@ document.addEventListener('DOMContentLoaded', function() {
   document.querySelectorAll('.chip-row').forEach(row => {
     row.addEventListener('click', handleChipClick);
   });
-  
+
   // Add text search handler
   const searchInput = document.getElementById('text-search');
   searchInput.addEventListener('input', handleTextSearch);
-  
+
   // Add reset handler
   document.getElementById('reset-filters').addEventListener('click', resetFilters);
-  
-  // Initial count
+
+  // Initial sort and filter
+  sortSessions();
   applyFilters();
 });
 </script>

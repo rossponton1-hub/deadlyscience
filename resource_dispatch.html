@@ -365,13 +365,24 @@ td {
 <!-- RECIPIENT SEARCH (Schools + Organizations) -->
 <div>
 <label>Recipient (School or Organization) *</label>
-<input 
-  id="recipientSearch" 
-  type="text" 
-  placeholder="Type school name, ACARA code, or organization..." 
+<div style="display:flex;gap:12px;align-items:flex-start;">
+<div style="flex:1;">
+<input
+  id="recipientSearch"
+  type="text"
+  placeholder="Type school name, ACARA code, or organization..."
   oninput="searchRecipient()"
   autocomplete="off"
 />
+</div>
+<div style="min-width:140px;">
+<select id="recipientSort" onchange="setRecipientSort(this.value)" style="padding:10px;">
+  <option value="type" selected>Sort by Type</option>
+  <option value="name">Sort by Name</option>
+  <option value="state">Sort by State</option>
+</select>
+</div>
+</div>
 <div class="muted" style="margin-top:4px;">
 Search for ACARA schools, juvenile justice facilities, community centers, etc.
 </div>
@@ -733,6 +744,39 @@ const FUNDERS = [
 let selectedRecipient = null;
 let lineItemCounter = 0;
 let csvData = null;
+let recipientSortBy = 'type'; // 'type', 'name', 'state'
+
+// Sort recipients based on current sort option
+function sortRecipients(recipients) {
+  return [...recipients].sort((a, b) => {
+    switch (recipientSortBy) {
+      case 'type':
+        // Schools first, then organizations, then alphabetical by name within each group
+        if (a.type !== b.type) {
+          return a.type === 'school' ? -1 : 1;
+        }
+        return a.name.localeCompare(b.name);
+      case 'name':
+        return a.name.localeCompare(b.name);
+      case 'state':
+        if (a.state !== b.state) {
+          return a.state.localeCompare(b.state);
+        }
+        return a.name.localeCompare(b.name);
+      default:
+        return 0;
+    }
+  });
+}
+
+function setRecipientSort(sortBy) {
+  recipientSortBy = sortBy;
+  // Re-run search to apply new sort
+  const query = document.getElementById('recipientSearch').value.trim();
+  if (query.length >= 2) {
+    searchRecipient();
+  }
+}
 
 // Toggle Shopify stub
 function toggleShopifyStub() {
@@ -761,17 +805,20 @@ function searchRecipient() {
       return;
     }
     
-    const matches = SAMPLE_RECIPIENTS.filter(r => 
+    const matches = SAMPLE_RECIPIENTS.filter(r =>
       r.name.toLowerCase().includes(query) ||
       r.acara.toLowerCase().includes(query)
     );
-    
-    if (matches.length === 0) {
+
+    // Apply sorting
+    const sortedMatches = sortRecipients(matches);
+
+    if (sortedMatches.length === 0) {
       resultsDiv.innerHTML = '<div class="error" style="padding:8px;font-size:13px;">No recipients found. Try a different search term.</div>';
       return;
     }
-    
-    resultsDiv.innerHTML = matches.map(r => {
+
+    resultsDiv.innerHTML = sortedMatches.map(r => {
       const icon = r.type === 'school' ? '📚' : '🏢';
       const typeLabel = r.type === 'school' ? 'School' : r.orgType;
       

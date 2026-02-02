@@ -135,6 +135,13 @@ Show All
 <span class="filter-section-label" style="margin-left:12px;">Status:</span>
 <button class="filter-chip active" data-filter="status" data-value="Scheduled" onclick="toggleStatusFilter('Scheduled')">Scheduled</button>
 <button class="filter-chip" data-filter="status" data-value="Delivered" onclick="toggleStatusFilter('Delivered')">Delivered</button>
+<span class="filter-section-label" style="margin-left:12px;">Sort:</span>
+<select id="session-sort" onchange="sortDeliverSessions(this.value)" style="padding:6px 10px;border:1px solid #e5e7eb;border-radius:6px;background:#fff;font-size:13px;cursor:pointer;">
+  <option value="date-asc" selected>Date (Soonest first)</option>
+  <option value="date-desc">Date (Latest first)</option>
+  <option value="title">Title (A-Z)</option>
+  <option value="status">Status</option>
+</select>
 </div>
 
 <!-- Warning Banner (shown when viewing All Sessions) -->
@@ -1461,6 +1468,54 @@ let filterState = {
   dateRange: 'upcoming_90',
   status: ['Scheduled']
 };
+
+let deliverSortBy = 'date-asc'; // 'date-asc', 'date-desc', 'title', 'status'
+
+// Sort session cards in deliver view
+function sortDeliverSessions(sortBy) {
+  deliverSortBy = sortBy;
+
+  // Sort cards in SessionListView
+  const sessionListView = document.getElementById('SessionListView');
+  const mainCards = Array.from(sessionListView.querySelectorAll('.session-card'));
+
+  // Sort cards in OtherSessionsList
+  const otherList = document.getElementById('OtherSessionsList');
+  const otherCards = Array.from(otherList.querySelectorAll('.session-card'));
+
+  const sortFn = (a, b) => {
+    switch (sortBy) {
+      case 'date-asc':
+        return new Date(a.dataset.date) - new Date(b.dataset.date);
+      case 'date-desc':
+        return new Date(b.dataset.date) - new Date(a.dataset.date);
+      case 'title':
+        const titleA = a.querySelector('h3')?.textContent || '';
+        const titleB = b.querySelector('h3')?.textContent || '';
+        return titleA.localeCompare(titleB);
+      case 'status':
+        const statusOrder = { 'Scheduled': 0, 'Delivered': 1 };
+        return (statusOrder[a.dataset.status] || 2) - (statusOrder[b.dataset.status] || 2);
+      default:
+        return 0;
+    }
+  };
+
+  mainCards.sort(sortFn);
+  otherCards.sort(sortFn);
+
+  // Re-append sorted cards (after the h2)
+  const heading = sessionListView.querySelector('h2');
+  mainCards.forEach(card => {
+    if (heading && heading.nextSibling) {
+      sessionListView.insertBefore(card, heading.nextSibling);
+    } else {
+      sessionListView.appendChild(card);
+    }
+  });
+
+  otherCards.forEach(card => otherList.appendChild(card));
+}
 
 // Load saved filters on init
 function initFilters() {
